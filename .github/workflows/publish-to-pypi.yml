@@ -31,7 +31,10 @@ jobs:
       - name: Setup Python and Poetry
         uses: ./.github/actions/setup-python-poetry
         with:
-          post_setup_command: "poetry install --no-interaction --no-root"
+          post_setup_command: "poetry install --all-extras"
+
+      - name: Test with Pytest
+        run: poetry run pytest
 
       - name: Bump version
         id: bump
@@ -47,9 +50,6 @@ jobs:
       - name: Build package
         run: poetry build
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-
       - name: Commit version bump and tag
         shell: bash
         run: |
@@ -64,6 +64,9 @@ jobs:
         run: |
           git push origin HEAD
           git push origin --tags
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
