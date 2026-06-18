@@ -77,6 +77,14 @@ class TestEmptyStrToNone:
 
         assert result == {"a": None, "b": "x", "c": 1}
 
+    def test_does_not_mutate_input(self) -> None:
+        """Test that the input mapping is left unchanged."""
+
+        original = {"a": "  ", "b": "x"}
+        empty_str_to_none(original)
+
+        assert original == {"a": "  ", "b": "x"}
+
 
 class TestTransformTaxIdentifier:
     """Tests for origin-aware tax identifier normalization."""

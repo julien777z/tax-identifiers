@@ -21,13 +21,12 @@ def collapse_whitespace(value: str) -> str:
 
 
 def empty_str_to_none(data: dict[str, object]) -> dict[str, object]:
-    """Convert empty or whitespace-only strings to None for all string fields."""
+    """Return a copy of the mapping with empty or whitespace-only strings replaced by None."""
 
-    for key, value in list(data.items()):
-        if isinstance(value, str) and value.strip() == "":
-            data[key] = None
-
-    return data
+    return {
+        key: None if isinstance(value, str) and value.strip() == "" else value
+        for key, value in data.items()
+    }
 
 
 def transform_required_string(value: str | None) -> str:
