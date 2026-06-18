@@ -44,6 +44,17 @@ class TestTaxIdentifierMasking:
 
         assert restored.tax_id == "123456789"
 
+    def test_masking_twice_preserves_original(
+        self,
+        tax_identifier_holder_factory: Callable[..., TaxIdentifierHolder],
+    ) -> None:
+        """Test that masking an already-masked model keeps the original recoverable."""
+
+        masked_twice = tax_identifier_holder_factory().to_masked().to_masked()
+
+        assert masked_twice.tax_id == "*******6789"
+        assert masked_twice.to_unmask().tax_id == "123456789"
+
     def test_masking_is_a_noop_without_tax_fields(self) -> None:
         """Test that masking a model without tax identifier fields returns it unchanged."""
 

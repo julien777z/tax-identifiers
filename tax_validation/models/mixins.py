@@ -93,6 +93,9 @@ class TaxIdentifierPairMixin:
     def to_masked(self) -> Self:
         """Return a copy with tax-identifier fields masked and originals persisted."""
 
+        if getattr(self, "_tax_identifiers_masked", False):
+            return self
+
         masked_model = self.model_copy()
         tax_id_fields = masked_model.get_annotated_fields(TaxIdFieldOptions)
         has_update = False
