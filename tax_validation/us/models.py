@@ -3,7 +3,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Final, Self
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import Field, ValidationError, computed_field, model_validator
 
 from tax_validation.base import BaseModel
 from tax_validation.enums import TaxIdentifierOrigin, TaxIdentifierType
@@ -197,7 +197,7 @@ class TinValidation(BaseModel):
 
         try:
             model = TaxIdentifierModel(tax_id=tax_id, tax_id_type=tax_id_type)
-        except ValueError:
+        except (ValidationError, ValueError):
             return None
 
         return cls(
