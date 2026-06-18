@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 from pydantic import ValidationError
 
@@ -7,9 +9,11 @@ from tax_validation import (
     NormalizedString,
     StringBool,
     TaxIdentifierOrigin,
+    TaxIdentifierType,
     TaxIdField,
     USState,
     USStateField,
+    format_us_ssn,
 )
 
 
@@ -101,13 +105,14 @@ class TestUSStateField:
 class TestTaxIdField:
     """Tests for the tax identifier field annotation."""
 
-    def test_normalizes_us_identifier(self) -> None:
+    def test_normalizes_us_identifier(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that a US identifier is stored as a formatting-insensitive value."""
 
-        holder = UsTaxIdHolder(tax_id="123-45-6789")
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        holder = UsTaxIdHolder(tax_id=format_us_ssn(raw_tax_id))
 
         assert isinstance(holder.tax_id, ComparableUsTaxIdentifier)
-        assert holder.tax_id == "123456789"
+        assert holder.tax_id == raw_tax_id
 
     def test_rejects_mask_characters_by_default(self) -> None:
         """Test that masked input is rejected unless masking is allowed."""

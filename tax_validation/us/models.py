@@ -5,18 +5,18 @@ from typing import Final, Self
 
 from pydantic import Field, computed_field, model_validator
 
+from tax_validation.base import BaseModel
 from tax_validation.enums import TaxIdentifierOrigin, TaxIdentifierType
-from tax_validation.models.base import BaseModel
-from tax_validation.normalization.fields import USStateField
-from tax_validation.normalization.tax_identifiers import (
+from tax_validation.us.fields import USStateField
+from tax_validation.us.tax_identifiers import (
     ComparableUsTaxIdentifier,
     clean_us_tax_identifier,
     format_us_ssn,
     is_us_tax_identifier_type,
 )
-from tax_validation.normalization.transformers import transform_tax_identifier
+from tax_validation.us.transformers import transform_tax_identifier
 
-STATIC_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "static"
+STATIC_DIR: Final[Path] = Path(__file__).resolve().parent / "static"
 SSN_ALLOCATION_FILE: Final[Path] = STATIC_DIR / "ssn_allocation.json"
 SSN_ALLOCATION_DATA: Final[dict[str, dict[str, object]]] = {}
 

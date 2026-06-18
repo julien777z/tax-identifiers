@@ -1,54 +1,54 @@
+from tax_validation.base import BaseModel
 from tax_validation.enums import (
     BaseEnum,
     Country,
     TaxIdentifierOrigin,
     TaxIdentifierType,
     TinType,
-    USState,
 )
 from tax_validation.exceptions import (
     InvalidTaxIdError,
     TaxValidationError,
     UnsupportedTaxIdTypeError,
 )
-from tax_validation.models.base import BaseModel
-from tax_validation.models.mixins import TaxIdentifierPairMixin, mask_tax_id
-from tax_validation.models.tin import SSNValidation, TaxIdentifierModel, TinValidation
-from tax_validation.normalization.fields import (
-    EINFormattedField,
-    NormalizedString,
-    SSNFormattedField,
-    StringBool,
-    StrRequired,
-    TaxIdField,
-    TaxIdFieldOptions,
-    TaxIdentifierTypeField,
-    USStateField,
+from tax_validation.fields import NormalizedString, StringBool, StrRequired
+from tax_validation.normalization import (
+    NON_DIGIT_PATTERN,
+    build_string_normalizer,
+    collapse_whitespace,
+    empty_str_to_none,
+    strip_non_digits,
+    transform_required_string,
 )
-from tax_validation.normalization.tax_identifiers import (
+from tax_validation.us import (
     US_TAX_IDENTIFIER_TYPES,
     ComparableUsTaxIdentifier,
+    EINFormattedField,
+    SSNFormattedField,
+    SSNValidation,
+    TaxIdentifierModel,
+    TaxIdentifierPairMixin,
+    TaxIdentifierTypeField,
+    TaxIdField,
+    TaxIdFieldOptions,
+    TinValidation,
+    USState,
+    USStateField,
+    USTaxValidator,
     clean_us_tax_identifier,
     format_us_ein,
     format_us_ssn,
     is_us_tax_identifier_type,
+    mask_tax_id,
     strict_format_us_ssn,
-    strip_non_digits,
     to_comparable_us_tax_identifier,
-)
-from tax_validation.normalization.transformers import (
-    build_string_normalizer,
-    collapse_whitespace,
-    empty_str_to_none,
     transform_ein_formatted,
-    transform_required_string,
     transform_ssn_formatted,
     transform_tax_id_field,
     transform_tax_identifier,
     transform_us_state,
 )
-from tax_validation.validators.base import TaxValidator
-from tax_validation.validators.us import USTaxValidator
+from tax_validation.validators import TaxValidator
 
 __all__ = [
     "BaseEnum",
@@ -61,6 +61,8 @@ __all__ = [
     "InvalidTaxIdError",
     "UnsupportedTaxIdTypeError",
     "BaseModel",
+    "TaxValidator",
+    "USTaxValidator",
     "TaxIdentifierPairMixin",
     "mask_tax_id",
     "SSNValidation",
@@ -71,10 +73,10 @@ __all__ = [
     "TaxIdentifierTypeField",
     "EINFormattedField",
     "SSNFormattedField",
+    "USStateField",
     "NormalizedString",
     "StringBool",
     "StrRequired",
-    "USStateField",
     "US_TAX_IDENTIFIER_TYPES",
     "ComparableUsTaxIdentifier",
     "clean_us_tax_identifier",
@@ -84,15 +86,14 @@ __all__ = [
     "strict_format_us_ssn",
     "strip_non_digits",
     "to_comparable_us_tax_identifier",
+    "NON_DIGIT_PATTERN",
     "build_string_normalizer",
     "collapse_whitespace",
     "empty_str_to_none",
-    "transform_ein_formatted",
     "transform_required_string",
+    "transform_ein_formatted",
     "transform_ssn_formatted",
     "transform_tax_id_field",
     "transform_tax_identifier",
     "transform_us_state",
-    "TaxValidator",
-    "USTaxValidator",
 ]

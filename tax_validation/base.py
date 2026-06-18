@@ -1,7 +1,7 @@
 from pydantic import ConfigDict, model_validator
 from pydantic_super_model import SuperModelPydanticMixin
 
-from tax_validation.normalization.transformers import empty_str_to_none
+from tax_validation.normalization import empty_str_to_none
 
 
 class BaseModel(SuperModelPydanticMixin):

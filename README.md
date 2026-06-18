@@ -114,12 +114,21 @@ masked.tax_id                                    # "*******6789"
 masked.to_unmask().tax_id == "123-45-6789"       # True
 ```
 
+## Package layout
+
+The top-level package holds country-agnostic scaffolding — `BaseModel`,
+`BaseEnum`, `Country`, the `TaxIdentifierType` / `TaxIdentifierOrigin` / `TinType`
+vocabulary, generic string normalization, and the `TaxValidator` abstract base.
+Country-specific code lives in its own subpackage (`tax_validation.us`), which is
+also re-exported from the top level for convenience.
+
 ## Adding a country
 
-`TaxValidator` is the shared abstract base. A new country is a subclass that
-implements `validate` and a `country` property, and gains a `Country` member.
-Country-specific validators are free to add their own helpers (for example, the
-US validator exposes `resolve_ssn`).
+`TaxValidator` is the shared, generic abstract base
+(`TaxValidator[ValidationResultT]`). A new country adds a `Country` member, a
+subpackage (for example `tax_validation/ca/`), and a `TaxValidator` subclass that
+implements `validate` and a `country` property. Country-specific validators are
+free to add their own helpers (for example, `USTaxValidator.resolve_ssn`).
 
 ## Development
 

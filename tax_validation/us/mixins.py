@@ -3,9 +3,9 @@ from typing import Self
 from pydantic import model_validator
 
 from tax_validation.enums import TaxIdentifierOrigin, TinType
-from tax_validation.normalization.fields import TaxIdFieldOptions
-from tax_validation.normalization.tax_identifiers import ComparableUsTaxIdentifier
-from tax_validation.normalization.transformers import transform_tax_identifier
+from tax_validation.us.fields import TaxIdFieldOptions
+from tax_validation.us.tax_identifiers import ComparableUsTaxIdentifier
+from tax_validation.us.transformers import transform_tax_identifier
 
 
 def mask_tax_id(value: str) -> str:
@@ -47,8 +47,13 @@ class TaxIdentifierPairMixin:
                 tin_type=options.tin_type,
             )
 
-            if options.origin == TaxIdentifierOrigin.US_TIN and normalized_tax_identifier:
+            if normalized_tax_identifier is None:
+                continue
+
+            if options.origin == TaxIdentifierOrigin.US_TIN:
                 object.__setattr__(self, field_name, ComparableUsTaxIdentifier(value))
+            else:
+                object.__setattr__(self, field_name, normalized_tax_identifier)
 
         return self
 

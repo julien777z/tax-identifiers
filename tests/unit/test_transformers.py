@@ -1,11 +1,15 @@
+from collections.abc import Callable
+
 import pytest
 
 from tax_validation import (
     TaxIdentifierOrigin,
+    TaxIdentifierType,
     TinType,
     build_string_normalizer,
     collapse_whitespace,
     empty_str_to_none,
+    format_us_ssn,
     transform_required_string,
     transform_tax_identifier,
 )
@@ -77,12 +81,14 @@ class TestEmptyStrToNone:
 class TestTransformTaxIdentifier:
     """Tests for origin-aware tax identifier normalization."""
 
-    def test_cleans_us_identifier_to_digits(self) -> None:
+    def test_cleans_us_identifier_to_digits(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that a US identifier normalizes to nine bare digits."""
 
-        result = transform_tax_identifier("123-45-6789", origin=TaxIdentifierOrigin.US_TIN)
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
 
-        assert result == "123456789"
+        result = transform_tax_identifier(format_us_ssn(raw_tax_id), origin=TaxIdentifierOrigin.US_TIN)
+
+        assert result == raw_tax_id
 
     def test_uppercases_foreign_identifier(self) -> None:
         """Test that a foreign identifier is normalized to uppercase."""
@@ -102,13 +108,18 @@ class TestTransformTaxIdentifier:
 
         assert transform_tax_identifier(None, origin=TaxIdentifierOrigin.FOREIGN_TIN) is None
 
-    def test_foreign_origin_with_ssn_subtype_is_cleaned(self) -> None:
+    def test_foreign_origin_with_ssn_subtype_is_cleaned(
+        self,
+        tax_id_factory: Callable[..., str],
+    ) -> None:
         """Test that an SSN subtype forces US cleaning even for foreign origin."""
 
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+
         result = transform_tax_identifier(
-            "123-45-6789",
+            format_us_ssn(raw_tax_id),
             origin=TaxIdentifierOrigin.FOREIGN_TIN,
             tin_type=TinType.SSN,
         )
 
-        assert result == "123456789"
+        assert result == raw_tax_id

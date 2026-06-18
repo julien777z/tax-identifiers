@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
 
+from tax_validation.base import BaseModel
 from tax_validation.enums import Country, TaxIdentifierType
-from tax_validation.models.tin import TinValidation
+
+ValidationResultT = TypeVar("ValidationResultT", bound=BaseModel)
 
 
-class TaxValidator(ABC):
+class TaxValidator(ABC, Generic[ValidationResultT]):
     """Abstract base for country-specific tax identifier validators."""
 
     @property
@@ -13,5 +16,5 @@ class TaxValidator(ABC):
         """Return the country this validator handles."""
 
     @abstractmethod
-    def validate(self, tax_id: str, tax_id_type: TaxIdentifierType) -> TinValidation:
+    def validate(self, tax_id: str, tax_id_type: TaxIdentifierType) -> ValidationResultT:
         """Validate a tax identifier and return its resolved validation summary."""

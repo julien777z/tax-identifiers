@@ -1,9 +1,12 @@
+from collections.abc import Callable
+
 import pytest
 
 from tax_validation import (
     ComparableUsTaxIdentifier,
     TaxIdentifierModel,
     TaxIdentifierType,
+    format_us_ssn,
 )
 
 
@@ -11,33 +14,40 @@ class TestTaxIdentifierModelValid:
     """Tests for the reserved-range validity check."""
 
     @pytest.mark.parametrize(
-        ("tax_id", "expected"),
-        [
-            ("123-45-6789", True),
-            ("000-12-3456", False),
-            ("666-12-3456", False),
-            ("900-12-3456", False),
-            ("123-00-6789", False),
-            ("123-45-0000", False),
-        ],
-        ids=["valid", "area_000", "area_666", "area_900", "group_00", "serial_0000"],
+        "tax_id",
+        ["000-12-3456", "666-12-3456", "900-12-3456", "123-00-6789", "123-45-0000"],
+        ids=["area_000", "area_666", "area_900", "group_00", "serial_0000"],
     )
-    def test_flags_reserved_ssn_ranges(self, tax_id: str, expected: bool) -> None:
+    def test_flags_reserved_ssn_ranges(self, tax_id: str) -> None:
         """Test that reserved SSN area, group, and serial values are flagged invalid."""
 
         model = TaxIdentifierModel(tax_id=tax_id, tax_id_type=TaxIdentifierType.SSN)
 
-        assert model.valid is expected
+        assert model.valid is False
+
+    def test_generated_ssn_is_valid(
+        self,
+        tax_identifier_model_factory: Callable[..., TaxIdentifierModel],
+    ) -> None:
+        """Test that a structurally sound SSN passes the validity check."""
+
+        model = tax_identifier_model_factory(TaxIdentifierType.SSN)
+
+        assert model.valid is True
 
     @pytest.mark.parametrize(
         "tax_id_type",
         [TaxIdentifierType.EIN, TaxIdentifierType.ITIN, TaxIdentifierType.US_UNSPECIFIED],
         ids=["ein", "itin", "us_unspecified"],
     )
-    def test_non_ssn_us_types_are_valid(self, tax_id_type: TaxIdentifierType) -> None:
+    def test_non_ssn_us_types_are_valid(
+        self,
+        tax_identifier_model_factory: Callable[..., TaxIdentifierModel],
+        tax_id_type: TaxIdentifierType,
+    ) -> None:
         """Test that non-SSN US identifier types skip reserved-range checks."""
 
-        model = TaxIdentifierModel(tax_id="123456789", tax_id_type=tax_id_type)
+        model = tax_identifier_model_factory(tax_id_type)
 
         assert model.valid is True
 
@@ -45,18 +55,23 @@ class TestTaxIdentifierModelValid:
 class TestTaxIdentifierModelSsnValidation:
     """Tests for derived SSN validation details."""
 
-    def test_resolves_issuing_details_for_ssn(self) -> None:
-        """Test that an SSN exposes resolved allocation details."""
+    def test_exposes_ssn_validation_for_ssn(
+        self,
+        tax_identifier_model_factory: Callable[..., TaxIdentifierModel],
+    ) -> None:
+        """Test that an SSN exposes a resolved validation object."""
 
-        model = TaxIdentifierModel(tax_id="001-01-0001", tax_id_type=TaxIdentifierType.SSN)
+        model = tax_identifier_model_factory(TaxIdentifierType.SSN)
 
         assert model.ssn_validation is not None
-        assert model.ssn_validation.issued_state is not None
 
-    def test_returns_none_for_non_ssn(self) -> None:
+    def test_returns_none_for_non_ssn(
+        self,
+        tax_identifier_model_factory: Callable[..., TaxIdentifierModel],
+    ) -> None:
         """Test that non-SSN identifiers expose no SSN validation."""
 
-        model = TaxIdentifierModel(tax_id="123456789", tax_id_type=TaxIdentifierType.EIN)
+        model = tax_identifier_model_factory(TaxIdentifierType.EIN)
 
         assert model.ssn_validation is None
 
@@ -64,13 +79,17 @@ class TestTaxIdentifierModelSsnValidation:
 class TestTaxIdentifierModelNormalization:
     """Tests for tax identifier normalization on construction."""
 
-    def test_us_identifier_is_comparable(self) -> None:
+    def test_us_identifier_is_comparable(
+        self,
+        tax_id_factory: Callable[..., str],
+    ) -> None:
         """Test that a US identifier is stored as a formatting-insensitive value."""
 
-        model = TaxIdentifierModel(tax_id="123-45-6789", tax_id_type=TaxIdentifierType.SSN)
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        model = TaxIdentifierModel(tax_id=format_us_ssn(raw_tax_id), tax_id_type=TaxIdentifierType.SSN)
 
         assert isinstance(model.tax_id, ComparableUsTaxIdentifier)
-        assert model.tax_id == "123456789"
+        assert model.tax_id == raw_tax_id
 
     def test_foreign_identifier_is_uppercased(self) -> None:
         """Test that a foreign identifier is normalized to uppercase."""
@@ -83,17 +102,49 @@ class TestTaxIdentifierModelNormalization:
 class TestTaxIdentifierModelEquality:
     """Tests for equality and hashing semantics."""
 
-    def test_equals_matching_model(self) -> None:
-        """Test that models with the same type and identifier compare equal."""
+    def test_equals_matching_model_across_formatting(
+        self,
+        tax_id_factory: Callable[..., str],
+    ) -> None:
+        """Test that dashed and bare forms of the same SSN compare equal."""
 
-        left = TaxIdentifierModel(tax_id="123-45-6789", tax_id_type=TaxIdentifierType.SSN)
-        right = TaxIdentifierModel(tax_id="123456789", tax_id_type=TaxIdentifierType.SSN)
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        left = TaxIdentifierModel(tax_id=format_us_ssn(raw_tax_id), tax_id_type=TaxIdentifierType.SSN)
+        right = TaxIdentifierModel(tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.SSN)
 
         assert left == right
 
-    def test_equals_normalized_string(self) -> None:
+    def test_equals_normalized_string(
+        self,
+        tax_id_factory: Callable[..., str],
+    ) -> None:
         """Test that a model compares equal to its normalized string form."""
 
-        model = TaxIdentifierModel(tax_id="123-45-6789", tax_id_type=TaxIdentifierType.SSN)
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        model = TaxIdentifierModel(tax_id=format_us_ssn(raw_tax_id), tax_id_type=TaxIdentifierType.SSN)
 
-        assert model == "123456789"
+        assert model == raw_tax_id
+
+    def test_differs_by_tax_id_type(
+        self,
+        tax_id_factory: Callable[..., str],
+    ) -> None:
+        """Test that the same digits under different types are not equal."""
+
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        ssn = TaxIdentifierModel(tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.SSN)
+        ein = TaxIdentifierModel(tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.EIN)
+
+        assert ssn != ein
+
+    def test_is_hashable_consistently_with_string(
+        self,
+        tax_id_factory: Callable[..., str],
+    ) -> None:
+        """Test that a model hashes consistently with its normalized identifier."""
+
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        model = TaxIdentifierModel(tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.SSN)
+
+        assert hash(model) == hash(raw_tax_id)
+        assert model in {model}

@@ -1,10 +1,9 @@
-import re
-from collections.abc import Callable
 from typing import Final
 
-from tax_validation.enums import TaxIdentifierOrigin, TinType, USState
-from tax_validation.normalization.tax_identifiers import (
-    NON_DIGIT_PATTERN,
+from tax_validation.enums import TaxIdentifierOrigin, TinType
+from tax_validation.normalization import collapse_whitespace
+from tax_validation.us.enums import USState
+from tax_validation.us.tax_identifiers import (
     ComparableUsTaxIdentifier,
     clean_us_tax_identifier,
     format_us_ein,
@@ -15,70 +14,6 @@ US_STATE_BY_CODE: Final[dict[str, USState]] = {state.value: state for state in U
 US_STATE_BY_NAME: Final[dict[str, USState]] = {
     state.name.replace("_", " "): state for state in USState
 }
-
-
-def collapse_whitespace(value: str) -> str:
-    """Collapse consecutive whitespace and trim leading and trailing whitespace."""
-
-    if not isinstance(value, str):
-        raise ValueError("Value must be a string")
-
-    return re.sub(r"\s+", " ", value).strip()
-
-
-def empty_str_to_none(data: dict[str, object]) -> dict[str, object]:
-    """Convert empty or whitespace-only strings to None for all string fields."""
-
-    for key, value in list(data.items()):
-        if isinstance(value, str) and value.strip() == "":
-            data[key] = None
-
-    return data
-
-
-def transform_required_string(value: str | None) -> str:
-    """Normalize a required string and reject empty values."""
-
-    if value is None:
-        raise ValueError("Value cannot be empty")
-
-    normalized_value = collapse_whitespace(value)
-
-    if not normalized_value:
-        raise ValueError("Value cannot be empty")
-
-    return normalized_value
-
-
-def build_string_normalizer(
-    *,
-    normalize_to_uppercase: bool = False,
-    normalize_to_lowercase: bool = False,
-    normalize_to_titlecase: bool = False,
-    strip_non_digits: bool = False,
-    strip_trailing_punctuation: bool = False,
-) -> Callable[[str], str]:
-    """Build a composable string normalizer from normalization options."""
-
-    def _normalize(value: str) -> str:
-        result = collapse_whitespace(value)
-
-        if normalize_to_uppercase:
-            result = result.upper()
-        elif normalize_to_lowercase:
-            result = result.lower()
-        elif normalize_to_titlecase:
-            result = result.title()
-
-        if strip_trailing_punctuation:
-            result = " ".join(token for token in (t.rstrip(".,") for t in result.split()) if token)
-
-        if strip_non_digits:
-            result = NON_DIGIT_PATTERN.sub("", result)
-
-        return result
-
-    return _normalize
 
 
 def transform_us_state(value: str | USState) -> USState:

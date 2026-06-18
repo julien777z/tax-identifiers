@@ -1,11 +1,11 @@
 from tax_validation.enums import Country, TaxIdentifierType
 from tax_validation.exceptions import InvalidTaxIdError, UnsupportedTaxIdTypeError
-from tax_validation.models.tin import SSNValidation, TinValidation
-from tax_validation.normalization.tax_identifiers import is_us_tax_identifier_type
-from tax_validation.validators.base import TaxValidator
+from tax_validation.us.models import SSNValidation, TinValidation
+from tax_validation.us.tax_identifiers import is_us_tax_identifier_type
+from tax_validation.validators import TaxValidator
 
 
-class USTaxValidator(TaxValidator):
+class USTaxValidator(TaxValidator[TinValidation]):
     """United States tax identifier validator (SSN, EIN, ITIN)."""
 
     @property

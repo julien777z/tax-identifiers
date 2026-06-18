@@ -1,7 +1,20 @@
 from collections.abc import Callable
 
-from tax_validation import BaseModel, TaxIdentifierOrigin, TaxIdentifierPairMixin, TinType
+from tax_validation import (
+    BaseModel,
+    TaxIdentifierOrigin,
+    TaxIdentifierPairMixin,
+    TaxIdentifierType,
+    TinType,
+    format_us_ssn,
+)
 from tests.conftest import TaxIdentifierHolder
+
+
+def expected_mask(display: str) -> str:
+    """Return the masked form of a tax identifier display string."""
+
+    return "*" * (len(display) - 4) + display[-4:]
 
 
 class PlainHolder(TaxIdentifierPairMixin, BaseModel):
@@ -16,12 +29,14 @@ class TestTaxIdentifierMasking:
     def test_normalizes_on_construction(
         self,
         tax_identifier_holder_factory: Callable[..., TaxIdentifierHolder],
+        tax_id_factory: Callable[..., str],
     ) -> None:
-        """Test that a US tax identifier is normalized when the model is built."""
+        """Test that a formatted US tax identifier is normalized when the model is built."""
 
-        holder = tax_identifier_holder_factory()
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        holder = tax_identifier_holder_factory(tax_id=format_us_ssn(raw_tax_id))
 
-        assert holder.tax_id == "123456789"
+        assert holder.tax_id == raw_tax_id
 
     def test_masks_all_but_last_four(
         self,
@@ -29,9 +44,10 @@ class TestTaxIdentifierMasking:
     ) -> None:
         """Test that masking hides every character except the last four."""
 
-        masked = tax_identifier_holder_factory().to_masked()
+        holder = tax_identifier_holder_factory()
+        display = str(holder.tax_id)
 
-        assert masked.tax_id == "*******6789"
+        assert holder.to_masked().tax_id == expected_mask(display)
 
     def test_unmask_restores_original_value(
         self,
@@ -40,9 +56,9 @@ class TestTaxIdentifierMasking:
         """Test that unmasking restores the original identifier."""
 
         holder = tax_identifier_holder_factory()
-        restored = holder.to_masked().to_unmask()
+        display = str(holder.tax_id)
 
-        assert restored.tax_id == "123456789"
+        assert holder.to_masked().to_unmask().tax_id == display
 
     def test_masking_twice_preserves_original(
         self,
@@ -50,10 +66,12 @@ class TestTaxIdentifierMasking:
     ) -> None:
         """Test that masking an already-masked model keeps the original recoverable."""
 
-        masked_twice = tax_identifier_holder_factory().to_masked().to_masked()
+        holder = tax_identifier_holder_factory()
+        display = str(holder.tax_id)
+        masked_twice = holder.to_masked().to_masked()
 
-        assert masked_twice.tax_id == "*******6789"
-        assert masked_twice.to_unmask().tax_id == "123456789"
+        assert masked_twice.tax_id == expected_mask(display)
+        assert masked_twice.to_unmask().tax_id == display
 
     def test_masking_is_a_noop_without_tax_fields(self) -> None:
         """Test that masking a model without tax identifier fields returns it unchanged."""

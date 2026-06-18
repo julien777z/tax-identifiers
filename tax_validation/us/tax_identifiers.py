@@ -1,7 +1,7 @@
-import re
 from typing import Final, Self
 
 from tax_validation.enums import TaxIdentifierType
+from tax_validation.normalization import strip_non_digits
 
 US_TAX_IDENTIFIER_TYPES: Final[frozenset[TaxIdentifierType]] = frozenset(
     {
@@ -11,13 +11,6 @@ US_TAX_IDENTIFIER_TYPES: Final[frozenset[TaxIdentifierType]] = frozenset(
         TaxIdentifierType.US_UNSPECIFIED,
     }
 )
-NON_DIGIT_PATTERN: Final[re.Pattern[str]] = re.compile(r"\D+")
-
-
-def strip_non_digits(value: str) -> str:
-    """Remove every non-digit character from a string."""
-
-    return NON_DIGIT_PATTERN.sub("", value)
 
 
 def is_us_tax_identifier_type(tax_identifier_type: TaxIdentifierType | None) -> bool:

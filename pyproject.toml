@@ -42,7 +42,7 @@ packages = [
     {include = "scripts"},
 ]
 include = [
-    { path = "tax_validation/static/*.json", format = ["sdist", "wheel"] },
+    { path = "tax_validation/us/static/*.json", format = ["sdist", "wheel"] },
 ]
 
 [build-system]
