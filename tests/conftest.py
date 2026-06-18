@@ -15,6 +15,7 @@ from tax_validation import (
     USTaxValidator,
 )
 from tax_validation.us import models as us_models
+from tax_validation.us.models import SSNAllocationEntry
 
 FOREIGN_TAX_ID_PREFIX = "GB"
 
@@ -79,10 +80,10 @@ def tax_identifier_holder_factory(
 
 
 @pytest.fixture
-def ssn_allocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, dict[str, object]]:
+def ssn_allocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, SSNAllocationEntry]:
     """Stub the SSN allocation dataset with known sample entries."""
 
-    dataset: dict[str, dict[str, object]] = {
+    dataset: dict[str, SSNAllocationEntry] = {
         "212": {"state": USState.MARYLAND.value, "groups": {"01": "1936-1950"}},
         "100": {"state": USState.NEW_YORK.value, "groups": {"12": "1977-1978"}},
     }

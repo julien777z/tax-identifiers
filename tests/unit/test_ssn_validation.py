@@ -1,6 +1,7 @@
 import pytest
 
 from tax_validation import SSNValidation, USState
+from tax_validation.us.models import SSNAllocationEntry
 
 
 class TestSSNValidationFromTaxIdentifier:
@@ -8,14 +9,12 @@ class TestSSNValidationFromTaxIdentifier:
 
     def test_resolves_known_area_and_group(
         self,
-        ssn_allocation: dict[str, dict[str, object]],
+        ssn_allocation: dict[str, SSNAllocationEntry],
     ) -> None:
         """Test that a known area and group resolve to issuing state and years."""
 
         area, entry = next(iter(ssn_allocation.items()))
-        groups = entry["groups"]
-        assert isinstance(groups, dict)
-        group, years = next(iter(groups.items()))
+        group, years = next(iter(entry["groups"].items()))
 
         validation = SSNValidation.from_tax_identifier(f"{area}{group}0001")
 
@@ -25,7 +24,7 @@ class TestSSNValidationFromTaxIdentifier:
 
     def test_unknown_area_resolves_without_state(
         self,
-        ssn_allocation: dict[str, dict[str, object]],
+        ssn_allocation: dict[str, SSNAllocationEntry],
     ) -> None:
         """Test that an unallocated area resolves to a validation without a state."""
 

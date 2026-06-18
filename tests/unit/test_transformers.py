@@ -23,12 +23,6 @@ class TestCollapseWhitespace:
 
         assert collapse_whitespace("  a   b  ") == "a b"
 
-    def test_rejects_non_string(self) -> None:
-        """Test that a non-string value raises an error."""
-
-        with pytest.raises(ValueError):
-            collapse_whitespace(123)
-
 
 class TestTransformRequiredString:
     """Tests for required-string normalization."""

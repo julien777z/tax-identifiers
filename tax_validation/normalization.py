@@ -14,9 +14,6 @@ def strip_non_digits(value: str) -> str:
 def collapse_whitespace(value: str) -> str:
     """Collapse consecutive whitespace and trim leading and trailing whitespace."""
 
-    if not isinstance(value, str):
-        raise ValueError("Value must be a string")
-
     return re.sub(r"\s+", " ", value).strip()
 
 

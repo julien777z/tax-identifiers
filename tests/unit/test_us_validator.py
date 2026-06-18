@@ -10,6 +10,7 @@ from tax_validation import (
     USTaxValidator,
     UnsupportedTaxIdTypeError,
 )
+from tax_validation.us.models import SSNAllocationEntry
 
 
 class TestUSTaxValidatorCountry:
@@ -74,14 +75,12 @@ class TestUSTaxValidatorResolveSsn:
     def test_resolves_known_ssn(
         self,
         us_validator: USTaxValidator,
-        ssn_allocation: dict[str, dict[str, object]],
+        ssn_allocation: dict[str, SSNAllocationEntry],
     ) -> None:
         """Test that a known SSN resolves to issuing details."""
 
         area, entry = next(iter(ssn_allocation.items()))
-        groups = entry["groups"]
-        assert isinstance(groups, dict)
-        group = next(iter(groups))
+        group = next(iter(entry["groups"]))
 
         validation = us_validator.resolve_ssn(f"{area}{group}0001")
 

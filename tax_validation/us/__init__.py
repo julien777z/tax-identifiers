@@ -20,8 +20,6 @@ from tax_validation.us.tax_identifiers import (
     to_comparable_us_tax_identifier,
 )
 from tax_validation.us.transformers import (
-    transform_ein_formatted,
-    transform_ssn_formatted,
     transform_tax_id_field,
     transform_tax_identifier,
     transform_us_state,
@@ -50,8 +48,6 @@ __all__ = [
     "is_us_tax_identifier_type",
     "strict_format_us_ssn",
     "to_comparable_us_tax_identifier",
-    "transform_ein_formatted",
-    "transform_ssn_formatted",
     "transform_tax_id_field",
     "transform_tax_identifier",
     "transform_us_state",

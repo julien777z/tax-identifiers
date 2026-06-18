@@ -1,7 +1,7 @@
 import json
 from functools import cached_property
 from pathlib import Path
-from typing import Final, Self
+from typing import Final, Self, TypedDict
 
 from pydantic import Field, ValidationError, computed_field, model_validator
 
@@ -11,14 +11,21 @@ from tax_validation.us.fields import USStateField
 from tax_validation.us.tax_identifiers import (
     ComparableUsTaxIdentifier,
     clean_us_tax_identifier,
-    format_us_ssn,
     is_us_tax_identifier_type,
 )
 from tax_validation.us.transformers import transform_tax_identifier
 
+
+class SSNAllocationEntry(TypedDict):
+    """Issuing state and group-to-years mapping for an SSN area number."""
+
+    state: str
+    groups: dict[str, str]
+
+
 STATIC_DIR: Final[Path] = Path(__file__).resolve().parent / "static"
 SSN_ALLOCATION_FILE: Final[Path] = STATIC_DIR / "ssn_allocation.json"
-SSN_ALLOCATION_DATA: Final[dict[str, dict[str, object]]] = {}
+SSN_ALLOCATION_DATA: Final[dict[str, SSNAllocationEntry]] = {}
 
 
 def initialize_dataset() -> None:
@@ -59,9 +66,6 @@ class SSNValidation(BaseModel):
         if not normalized:
             return None
 
-        if format_us_ssn(normalized) is None:
-            return None
-
         issued_state, issued_years = cls.lookup_allocation(normalized)
 
         return cls(issued_state=issued_state, issued_years=issued_years)
@@ -77,11 +81,7 @@ class SSNValidation(BaseModel):
         if allocation is None:
             return None, None
 
-        issued_state = allocation.get("state")
-        groups = allocation.get("groups")
-        issued_years = groups.get(group_number) if isinstance(groups, dict) else None
-
-        return issued_state, issued_years
+        return allocation["state"], allocation["groups"].get(group_number)
 
 
 class TaxIdentifierModel(BaseModel):
@@ -94,7 +94,7 @@ class TaxIdentifierModel(BaseModel):
     def normalize_tax_identifier(self) -> Self:
         """Normalize the tax identifier using the explicit tax identifier type."""
 
-        raw_tax_identifier = str(self.tax_id)
+        raw_tax_identifier = self.tax_id
         origin = TaxIdentifierOrigin.US_TIN if self.us_tin else TaxIdentifierOrigin.FOREIGN_TIN
         normalized_tax_identifier = transform_tax_identifier(raw_tax_identifier, origin=origin)
 

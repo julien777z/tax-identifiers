@@ -60,22 +60,17 @@ class TaxIdentifierPairMixin:
     def tax_id_field_options(self, field_name: str) -> TaxIdFieldOptions | None:
         """Return tax-id field metadata when present."""
 
-        tax_id_fields = self.get_annotated_fields(TaxIdFieldOptions)
-        field_info = tax_id_fields.get(field_name)
+        field_info = self.get_annotated_fields(TaxIdFieldOptions).get(field_name)
 
         if field_info is None:
             return None
 
-        matched_metadata = getattr(field_info, "matched_metadata", None)
-        if matched_metadata is None:
-            model_field = type(self).model_fields.get(field_name)
-            matched_metadata = model_field.metadata if model_field else ()
-
-        if not matched_metadata:
-            return None
-
         return next(
-            (metadata for metadata in matched_metadata if isinstance(metadata, TaxIdFieldOptions)),
+            (
+                metadata
+                for metadata in field_info.matched_metadata
+                if isinstance(metadata, TaxIdFieldOptions)
+            ),
             None,
         )
 
