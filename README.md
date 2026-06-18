@@ -1,12 +1,9 @@
 # tax-validation
 
-Validate and resolve tax identifiers with Pydantic. The library rejects tax IDs
-that do not conform to their country's structural rules (for example, an SSN that
-is not nine digits or uses a reserved range) and returns resolved details such as
-an SSN's issuing state and issued years.
-
-US tax identifiers (SSN, EIN, ITIN) are supported today, and the design makes it
-straightforward to add more countries.
+Validate tax identifiers and resolve their metadata with Pydantic. The library
+rejects tax IDs that do not conform to their country's structural rules (currently
+only US tax identifiers are supported) and returns resolved details such as an
+SSN's issuing state and issued years.
 
 ## Installation
 
@@ -28,15 +25,28 @@ result.ssn_validation.issued_state  # a USState enum (serializes to e.g. "NY")
 result.ssn_validation.issued_years  # e.g. "1936-1950"
 ```
 
-`validate` raises when the identifier is clearly invalid, and returns a
-`TinValidation` summary otherwise:
+`validate` raises when the identifier is structurally malformed or its type is
+unsupported; otherwise it returns a `TinValidation` summary whose `valid` flag
+reflects the reserved-range checks:
 
 ```python
 from tax_validation import InvalidTaxIdError, UnsupportedTaxIdTypeError
 
-validator.validate("123-45-67890", TaxIdentifierType.SSN)   # InvalidTaxIdError (10 digits)
-validator.validate("666-12-3456", TaxIdentifierType.SSN).valid   # False (reserved area)
-validator.validate("X1", TaxIdentifierType.FOREIGN_TIN)     # UnsupportedTaxIdTypeError
+# A parseable SSN returns a summary; reserved ranges set valid=False (no raise).
+result = validator.validate("666-12-3456", TaxIdentifierType.SSN)
+result.valid   # False (666 is a reserved area)
+
+# A wrong-length identifier raises.
+try:
+    validator.validate("123-45-67890", TaxIdentifierType.SSN)
+except InvalidTaxIdError:
+    ...  # 10 digits is not a valid SSN
+
+# An unsupported type raises.
+try:
+    validator.validate("X1", TaxIdentifierType.FOREIGN_TIN)
+except UnsupportedTaxIdTypeError:
+    ...  # USTaxValidator only handles US identifier types
 ```
 
 Use `TinValidation.from_tax_identifier` when you prefer a non-raising helper that
@@ -51,8 +61,8 @@ summary.valid    # True
 
 ## Normalization utilities
 
-The normalization helpers and annotated Pydantic field types are public so you can
-reuse them in your own models:
+The library provides normalization helpers and annotated Pydantic field types you
+can reuse in your own models:
 
 ```python
 from tax_validation import (
