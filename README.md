@@ -156,21 +156,6 @@ The top-level package holds country-agnostic scaffolding — `BaseModel`,
 `GenericTaxRules` fallback. Country-specific code lives in its own subpackage
 (`tax_validation.us`), which is also re-exported from the top level for convenience.
 
-## Adding a country
-
-`TaxValidator`, `TaxIdentifier`, `TaxIdField`, and `TaxValidationResult` are
-generic and take a `Country`; they dispatch to a `CountryTaxRules` implementation
-resolved by `get_country_rules`. Countries without a dedicated implementation fall
-back to `GenericTaxRules`. To add first-class support for a country:
-
-1. Implement `CountryTaxRules` (for example in `tax_validation/ca/rules.py`),
-   defining `country`, `supported_types`, `normalize`, `is_valid`, and
-   `resolve_metadata`.
-2. Add a `match` arm to `get_country_rules` in `tax_validation/rules.py` that
-   returns your rules for the new `Country` member.
-
-No new models, fields, or validators are required.
-
 ## Development
 
 ```bash
