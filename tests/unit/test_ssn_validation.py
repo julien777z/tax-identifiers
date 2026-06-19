@@ -1,7 +1,7 @@
 import pytest
 
 from tax_validation import SSNValidation, USState
-from tax_validation.us.models import SSNAllocationEntry
+from tax_validation.us.metadata import SSNAllocationEntry
 
 
 class TestSSNValidationFromTaxIdentifier:

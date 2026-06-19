@@ -5,29 +5,31 @@ import pytest
 from tax_validation import (
     Country,
     InvalidTaxIdError,
+    SSNValidation,
     TaxIdentifierType,
+    TaxValidator,
     USState,
-    USTaxValidator,
     UnsupportedTaxIdTypeError,
+    UsTaxRules,
 )
-from tax_validation.us.models import SSNAllocationEntry
+from tax_validation.us.metadata import SSNAllocationEntry
 
 
-class TestUSTaxValidatorCountry:
+class TestUsTaxValidatorCountry:
     """Tests for the validator's country identity."""
 
-    def test_reports_united_states(self, us_validator: USTaxValidator) -> None:
+    def test_reports_united_states(self, us_validator: TaxValidator) -> None:
         """Test that the US validator reports the United States."""
 
         assert us_validator.country == Country.US
 
 
-class TestUSTaxValidatorValidate:
+class TestUsTaxValidatorValidate:
     """Tests for validating US tax identifiers."""
 
     def test_returns_resolution_for_valid_ssn(
         self,
-        us_validator: USTaxValidator,
+        us_validator: TaxValidator,
         tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that a valid SSN returns a summary with resolved details."""
@@ -35,7 +37,7 @@ class TestUSTaxValidatorValidate:
         result = us_validator.validate(tax_id_factory(TaxIdentifierType.SSN), TaxIdentifierType.SSN)
 
         assert result.valid is True
-        assert result.ssn_validation is not None
+        assert result.metadata is not None
 
     @pytest.mark.parametrize(
         "tax_id",
@@ -44,7 +46,7 @@ class TestUSTaxValidatorValidate:
     )
     def test_rejects_structurally_invalid_ssn(
         self,
-        us_validator: USTaxValidator,
+        us_validator: TaxValidator,
         tax_id: str,
     ) -> None:
         """Test that an SSN without nine digits is rejected."""
@@ -59,7 +61,7 @@ class TestUSTaxValidatorValidate:
     )
     def test_rejects_unsupported_types(
         self,
-        us_validator: USTaxValidator,
+        us_validator: TaxValidator,
         tax_id_factory: Callable[..., str],
         tax_id_type: TaxIdentifierType,
     ) -> None:
@@ -69,12 +71,11 @@ class TestUSTaxValidatorValidate:
             us_validator.validate(tax_id_factory(TaxIdentifierType.SSN), tax_id_type)
 
 
-class TestUSTaxValidatorResolveSsn:
-    """Tests for the SSN resolution helper."""
+class TestUsTaxRulesResolveMetadata:
+    """Tests for resolving SSN metadata through US rules."""
 
     def test_resolves_known_ssn(
         self,
-        us_validator: USTaxValidator,
         ssn_allocation: dict[str, SSNAllocationEntry],
     ) -> None:
         """Test that a known SSN resolves to issuing details."""
@@ -82,12 +83,12 @@ class TestUSTaxValidatorResolveSsn:
         area, entry = next(iter(ssn_allocation.items()))
         group = next(iter(entry["groups"]))
 
-        validation = us_validator.resolve_ssn(f"{area}{group}0001")
+        metadata = UsTaxRules().resolve_metadata(f"{area}{group}0001", TaxIdentifierType.SSN)
 
-        assert validation is not None
-        assert validation.issued_state == USState(entry["state"])
+        assert isinstance(metadata, SSNValidation)
+        assert metadata.issued_state == USState(entry["state"])
 
-    def test_returns_none_for_invalid_ssn(self, us_validator: USTaxValidator) -> None:
+    def test_returns_none_for_invalid_ssn(self) -> None:
         """Test that an SSN without nine digits resolves to None."""
 
-        assert us_validator.resolve_ssn("12345") is None
+        assert UsTaxRules().resolve_metadata("12345", TaxIdentifierType.SSN) is None

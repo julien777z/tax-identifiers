@@ -8,12 +8,6 @@ class BaseEnum(str, Enum):
         return self.value
 
 
-class Country(BaseEnum):
-    """Country a tax identifier validator handles."""
-
-    US = "us"
-
-
 class TaxIdentifierType(BaseEnum):
     """Type of a tax identifier."""
 

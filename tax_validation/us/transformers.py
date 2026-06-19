@@ -3,7 +3,7 @@ from typing import Final
 from tax_validation.enums import TaxIdentifierOrigin, TinType
 from tax_validation.normalization import collapse_whitespace
 from tax_validation.us.enums import USState
-from tax_validation.us.tax_identifiers import ComparableUsTaxIdentifier, clean_us_tax_identifier
+from tax_validation.us.tax_identifiers import clean_us_tax_identifier
 
 US_STATE_BY_CODE: Final[dict[str, USState]] = {state.value: state for state in USState}
 US_STATE_BY_NAME: Final[dict[str, USState]] = {
@@ -55,37 +55,3 @@ def transform_tax_identifier(
         return clean_us_tax_identifier(normalized_value)
 
     return normalized_value
-
-
-def transform_tax_id_field(
-    value: str,
-    *,
-    origin: TaxIdentifierOrigin,
-    tin_type: TinType | None,
-    allow_masked: bool,
-) -> str | ComparableUsTaxIdentifier | None:
-    """Normalize tax IDs and preserve comparable US display strings."""
-
-    normalized_input = collapse_whitespace(value).upper()
-
-    if not normalized_input:
-        return None
-
-    if "*" in normalized_input:
-        if allow_masked:
-            return normalized_input
-
-        raise ValueError("Tax ID cannot contain mask characters")
-
-    if not requires_us_cleaning(origin, tin_type):
-        return normalized_input
-
-    cleaned = clean_us_tax_identifier(normalized_input)
-
-    if cleaned is None:
-        return None
-
-    if origin == TaxIdentifierOrigin.US_TIN:
-        return ComparableUsTaxIdentifier(normalized_input)
-
-    return cleaned

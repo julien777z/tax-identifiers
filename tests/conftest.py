@@ -5,17 +5,16 @@ import pytest
 
 from tax_validation import (
     BaseModel,
-    TaxIdentifierModel,
-    TaxIdentifierOrigin,
+    Country,
+    TaxIdentifier,
     TaxIdentifierPairMixin,
     TaxIdentifierType,
     TaxIdField,
-    TinType,
+    TaxValidator,
     USState,
-    USTaxValidator,
 )
-from tax_validation.us import models as us_models
-from tax_validation.us.models import SSNAllocationEntry
+from tax_validation.us import metadata as us_metadata
+from tax_validation.us.metadata import SSNAllocationEntry
 
 FOREIGN_TAX_ID_PREFIX = "GB"
 
@@ -23,14 +22,14 @@ FOREIGN_TAX_ID_PREFIX = "GB"
 class TaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
     """Test model exposing a single maskable US tax identifier field."""
 
-    tax_id: TaxIdField(origin=TaxIdentifierOrigin.US_TIN, tin_type=TinType.SSN)
+    tax_id: TaxIdField(country=Country.US, tax_id_type=TaxIdentifierType.SSN)
 
 
 @pytest.fixture
-def us_validator() -> USTaxValidator:
+def us_validator() -> TaxValidator:
     """Provide a US tax identifier validator."""
 
-    return USTaxValidator()
+    return TaxValidator(Country.US)
 
 
 @pytest.fixture
@@ -51,18 +50,19 @@ def tax_id_factory() -> Callable[..., str]:
 
 
 @pytest.fixture
-def tax_identifier_model_factory(
+def tax_identifier_factory(
     tax_id_factory: Callable[..., str],
-) -> Callable[..., TaxIdentifierModel]:
-    """Build TaxIdentifierModel instances with generated, type-appropriate identifiers."""
+) -> Callable[..., TaxIdentifier]:
+    """Build TaxIdentifier instances with generated, type-appropriate identifiers."""
 
     def _build(
         tax_id_type: TaxIdentifierType = TaxIdentifierType.SSN,
         tax_id: str | None = None,
-    ) -> TaxIdentifierModel:
+        country: Country = Country.US,
+    ) -> TaxIdentifier:
         resolved_tax_id = tax_id if tax_id is not None else tax_id_factory(tax_id_type)
 
-        return TaxIdentifierModel(tax_id_type=tax_id_type, tax_id=resolved_tax_id)
+        return TaxIdentifier(country=country, tax_id_type=tax_id_type, tax_id=resolved_tax_id)
 
     return _build
 
@@ -87,6 +87,6 @@ def ssn_allocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, SSNAllocationEn
         "212": {"state": USState.MARYLAND.value, "groups": {"01": "1936-1950"}},
         "100": {"state": USState.NEW_YORK.value, "groups": {"12": "1977-1978"}},
     }
-    monkeypatch.setattr(us_models, "SSN_ALLOCATION_DATA", dataset)
+    monkeypatch.setattr(us_metadata, "SSN_ALLOCATION_DATA", dataset)
 
     return dataset

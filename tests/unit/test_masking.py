@@ -2,10 +2,9 @@ from collections.abc import Callable
 
 from tax_validation import (
     BaseModel,
-    TaxIdentifierOrigin,
+    Country,
     TaxIdentifierPairMixin,
     TaxIdentifierType,
-    TinType,
     format_us_ssn,
 )
 from tests.conftest import TaxIdentifierHolder
@@ -81,16 +80,16 @@ class TestTaxIdentifierMasking:
         assert holder.to_masked() is holder
 
 
-class TestTaxIdentifierMetadata:
+class TestTaxIdentifierFieldMetadata:
     """Tests for tax identifier annotation metadata accessors."""
 
-    def test_exposes_origin_and_tin_type(
+    def test_exposes_country_and_type(
         self,
         tax_identifier_holder_factory: Callable[..., TaxIdentifierHolder],
     ) -> None:
-        """Test that the field's origin and tin type are exposed from metadata."""
+        """Test that the field's country and tax identifier type are exposed from metadata."""
 
         holder = tax_identifier_holder_factory()
 
-        assert holder.tax_identifier_origin == TaxIdentifierOrigin.US_TIN
-        assert holder.tin_type == TinType.SSN
+        assert holder.tax_identifier_country == Country.US
+        assert holder.tax_identifier_type == TaxIdentifierType.SSN

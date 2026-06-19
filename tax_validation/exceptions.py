@@ -8,3 +8,7 @@ class InvalidTaxIdError(TaxValidationError):
 
 class UnsupportedTaxIdTypeError(TaxValidationError):
     """Raised when a validator receives a tax identifier type it does not handle."""
+
+
+class UnknownCountryError(TaxValidationError, ValueError):
+    """Raised when a country string cannot be resolved to a known country."""

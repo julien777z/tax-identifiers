@@ -1,9 +1,10 @@
 # tax-validation
 
 Validate tax identifiers and resolve their metadata with Pydantic. The library
-rejects tax IDs that do not conform to their country's structural rules (currently
-only US tax identifiers are supported) and returns resolved details such as an
-SSN's issuing state and issued years.
+normalizes tax IDs, rejects values that do not conform to their country's
+structural rules, and returns resolved details such as an SSN's issuing state and
+issued years. The United States has dedicated rules; every other country is
+accepted with generic normalization and validation.
 
 ## Installation
 
@@ -14,27 +15,46 @@ pip install tax-validation
 ## Quick start
 
 ```python
-from tax_validation import USTaxValidator, TaxIdentifierType
+from tax_validation import TaxValidator, Country, TaxIdentifierType
 
-validator = USTaxValidator()
+validator = TaxValidator(Country.US)
 
 result = validator.validate("123-45-6789", TaxIdentifierType.SSN)
-result.valid                        # True (passes reserved-range checks)
-result.tin_type                     # TaxIdentifierType.SSN
-result.ssn_validation.issued_state  # a USState enum (serializes to e.g. "NY")
-result.ssn_validation.issued_years  # e.g. "1936-1950"
+result.valid                   # True (passes reserved-range checks)
+result.country                 # Country.US
+result.tax_id_type             # TaxIdentifierType.SSN
+result.metadata.issued_state   # a USState enum (serializes to e.g. "NY")
+result.metadata.issued_years   # e.g. "1936-1950"
+```
+
+`Country.from_string` normalizes codes and names (`"US"`, `"us"`, `"United States"`,
+`"USA"`, …), so a validator can be built straight from a database column:
+
+```python
+validator = TaxValidator(Country.from_string(row.country))
+```
+
+Countries without dedicated rules fall back to generic normalization and a
+plausibility check, while still reporting the resolved country:
+
+```python
+validator = TaxValidator(Country.from_string("France"))
+
+result = validator.validate("FR1234567", TaxIdentifierType.FOREIGN_TIN)
+result.country    # Country.FR
+result.valid      # True (generic sanity check)
+result.metadata   # None (no country-specific metadata)
 ```
 
 `validate` raises when the identifier is structurally malformed or its type is
-unsupported; otherwise it returns a `TinValidation` summary whose `valid` flag
-reflects the reserved-range checks:
+unsupported for the country; otherwise it returns a `TaxValidationResult` summary
+(which omits the raw identifier) whose `valid` flag reflects the structural checks:
 
 ```python
 from tax_validation import InvalidTaxIdError, UnsupportedTaxIdTypeError
 
 # A parseable SSN returns a summary; reserved ranges set valid=False (no raise).
-result = validator.validate("666-12-3456", TaxIdentifierType.SSN)
-result.valid   # False (666 is a reserved area)
+validator.validate("666-12-3456", TaxIdentifierType.SSN).valid   # False
 
 # A wrong-length identifier raises.
 try:
@@ -42,20 +62,22 @@ try:
 except InvalidTaxIdError:
     ...  # 10 digits is not a valid SSN
 
-# An unsupported type raises.
+# A type the country does not handle raises.
 try:
-    validator.validate("X1", TaxIdentifierType.FOREIGN_TIN)
+    TaxValidator(Country.US).validate("X1", TaxIdentifierType.FOREIGN_TIN)
 except UnsupportedTaxIdTypeError:
-    ...  # USTaxValidator only handles US identifier types
+    ...  # US rules only handle US identifier types
 ```
 
-Use `TinValidation.from_tax_identifier` when you prefer a non-raising helper that
-returns `None` for missing or malformed input:
+Use `TaxValidationResult.from_tax_identifier` when you prefer a non-raising helper
+that returns `None` for missing or malformed input:
 
 ```python
-from tax_validation import TinValidation, TaxIdentifierType
+from tax_validation import TaxValidationResult, Country, TaxIdentifierType
 
-summary = TinValidation.from_tax_identifier(tax_id="12-3456789", tax_id_type=TaxIdentifierType.EIN)
+summary = TaxValidationResult.from_tax_identifier(
+    country=Country.US, tax_id="12-3456789", tax_id_type=TaxIdentifierType.EIN
+)
 summary.valid    # True
 ```
 
@@ -104,16 +126,16 @@ Models that carry a `TaxIdField` can mask and unmask the value via the
 ```python
 from tax_validation import (
     BaseModel,
+    Country,
     TaxIdentifierPairMixin,
+    TaxIdentifierType,
     TaxIdField,
-    TaxIdentifierOrigin,
-    TinType,
 )
 
 
 class ContractorTaxInfo(TaxIdentifierPairMixin, BaseModel):
     name: str
-    tax_id: TaxIdField(origin=TaxIdentifierOrigin.US_TIN, tin_type=TinType.SSN)
+    tax_id: TaxIdField(country=Country.US, tax_id_type=TaxIdentifierType.SSN)
 
 
 record = ContractorTaxInfo(name="Jane Doe", tax_id="123-45-6789")
@@ -127,18 +149,27 @@ masked.to_unmask().tax_id == "123-45-6789"       # True
 ## Package layout
 
 The top-level package holds country-agnostic scaffolding — `BaseModel`,
-`BaseEnum`, `Country`, the `TaxIdentifierType` / `TaxIdentifierOrigin` / `TinType`
-vocabulary, generic string normalization, and the `TaxValidator` abstract base.
-Country-specific code lives in its own subpackage (`tax_validation.us`), which is
-also re-exported from the top level for convenience.
+`BaseEnum`, the `Country` enum and `Country.from_string`, the `TaxIdentifierType` /
+`TaxIdentifierOrigin` / `TinType` vocabulary, generic string normalization, the
+`CountryTaxRules` strategy and `get_country_rules` registry, the generic
+`TaxIdentifier`, `TaxValidationResult`, `TaxValidator`, and `TaxIdField`, and the
+`GenericTaxRules` fallback. Country-specific code lives in its own subpackage
+(`tax_validation.us`), which is also re-exported from the top level for convenience.
 
 ## Adding a country
 
-`TaxValidator` is the shared, generic abstract base
-(`TaxValidator[ValidationResultT]`). A new country adds a `Country` member, a
-subpackage (for example `tax_validation/ca/`), and a `TaxValidator` subclass that
-implements `validate` and a `country` property. Country-specific validators are
-free to add their own helpers (for example, `USTaxValidator.resolve_ssn`).
+`TaxValidator`, `TaxIdentifier`, `TaxIdField`, and `TaxValidationResult` are
+generic and take a `Country`; they dispatch to a `CountryTaxRules` implementation
+resolved by `get_country_rules`. Countries without a dedicated implementation fall
+back to `GenericTaxRules`. To add first-class support for a country:
+
+1. Implement `CountryTaxRules` (for example in `tax_validation/ca/rules.py`),
+   defining `country`, `supported_types`, `normalize`, `is_valid`, and
+   `resolve_metadata`.
+2. Add a `match` arm to `get_country_rules` in `tax_validation/rules.py` that
+   returns your rules for the new `Country` member.
+
+No new models, fields, or validators are required.
 
 ## Development
 

@@ -2,10 +2,10 @@ from typing import Self
 
 from pydantic import model_validator
 
-from tax_validation.enums import TaxIdentifierOrigin, TinType
-from tax_validation.us.fields import TaxIdFieldOptions
-from tax_validation.us.tax_identifiers import ComparableUsTaxIdentifier
-from tax_validation.us.transformers import transform_tax_identifier
+from tax_validation.countries import Country
+from tax_validation.enums import TaxIdentifierType
+from tax_validation.fields import TaxIdFieldOptions
+from tax_validation.rules import get_country_rules
 
 
 def mask_tax_id(value: str) -> str:
@@ -22,7 +22,7 @@ class TaxIdentifierPairMixin:
 
     @model_validator(mode="after")
     def normalize_tax_identifier_fields_if_present(self) -> Self:
-        """Normalize tax identifier fields and wrap strict US identifiers for comparison."""
+        """Normalize tax identifier fields using each field's country rules."""
 
         if getattr(self, "_tax_identifiers_masked", False):
             return self
@@ -41,19 +41,8 @@ class TaxIdentifierPairMixin:
             if "*" in value and options.allow_masked:
                 continue
 
-            normalized_tax_identifier = transform_tax_identifier(
-                value,
-                origin=options.origin,
-                tin_type=options.tin_type,
-            )
-
-            if normalized_tax_identifier is None:
-                continue
-
-            if options.origin == TaxIdentifierOrigin.US_TIN:
-                object.__setattr__(self, field_name, ComparableUsTaxIdentifier(value))
-            else:
-                object.__setattr__(self, field_name, normalized_tax_identifier)
+            normalized = get_country_rules(options.country).normalize(value, options.tax_id_type)
+            object.__setattr__(self, field_name, normalized)
 
         return self
 
@@ -75,20 +64,20 @@ class TaxIdentifierPairMixin:
         )
 
     @property
-    def tax_identifier_origin(self) -> TaxIdentifierOrigin:
-        """Return tax-id origin metadata for the tax_id field."""
+    def tax_identifier_country(self) -> Country | None:
+        """Return the country metadata for the tax_id field."""
 
         options = self.tax_id_field_options("tax_id")
 
-        return options.origin if options else TaxIdentifierOrigin.US_TIN
+        return options.country if options else None
 
     @property
-    def tin_type(self) -> TinType | None:
-        """Return optional tin type metadata for the tax_id field."""
+    def tax_identifier_type(self) -> TaxIdentifierType | None:
+        """Return the tax identifier type metadata for the tax_id field."""
 
         options = self.tax_id_field_options("tax_id")
 
-        return options.tin_type if options else None
+        return options.tax_id_type if options else None
 
     def to_masked(self) -> Self:
         """Return a copy with tax-identifier fields masked and originals persisted."""

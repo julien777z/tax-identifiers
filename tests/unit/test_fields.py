@@ -6,9 +6,9 @@ from pydantic import ValidationError
 from tax_validation import (
     BaseModel,
     ComparableUsTaxIdentifier,
+    Country,
     NormalizedString,
     StringBool,
-    TaxIdentifierOrigin,
     TaxIdentifierType,
     TaxIdField,
     USState,
@@ -44,13 +44,13 @@ class StateHolder(BaseModel):
 class UsTaxIdHolder(BaseModel):
     """Test model with a US tax identifier field."""
 
-    tax_id: TaxIdField(origin=TaxIdentifierOrigin.US_TIN)
+    tax_id: TaxIdField(country=Country.US)
 
 
 class MaskedTaxIdHolder(BaseModel):
     """Test model accepting a masked US tax identifier."""
 
-    tax_id: TaxIdField(origin=TaxIdentifierOrigin.US_TIN, allow_masked=True)
+    tax_id: TaxIdField(country=Country.US, allow_masked=True)
 
 
 class TestNormalizedString:
