@@ -1,10 +1,6 @@
 # tax-validation
 
-Validate tax identifiers and resolve their metadata with Pydantic. The library
-normalizes tax IDs, rejects values that do not conform to their country's
-structural rules, and returns resolved details such as an SSN's issuing state and
-issued years. The United States has dedicated rules; every other country is
-accepted with generic normalization and validation.
+Country-aware tax identifier validation, normalization, and metadata resolution for Pydantic models.
 
 ## Installation
 
@@ -12,93 +8,85 @@ accepted with generic normalization and validation.
 pip install tax-validation
 ```
 
-## Quick start
+## Quick Start
+
+Construct a `TaxValidator` for a country and validate an identifier — the validator normalizes the value, applies that country's structural rules, and resolves any metadata. The United States has dedicated rules (SSN, EIN, ITIN); every other country falls back to generic normalization and a plausibility check.
 
 ```python
 from tax_validation import TaxValidator, Country, TaxIdentifierType
 
 validator = TaxValidator(Country.US)
-
 result = validator.validate("123-45-6789", TaxIdentifierType.SSN)
-result.valid                   # True (passes reserved-range checks)
+
+result.valid                   # True — passes the SSN reserved-range checks
 result.country                 # Country.US
 result.tax_id_type             # TaxIdentifierType.SSN
-result.metadata.issued_state   # a USState enum (serializes to e.g. "NY")
+result.metadata.issued_state   # a USState enum — e.g. USState.NEW_YORK ("NY")
 result.metadata.issued_years   # e.g. "1936-1950"
 ```
 
-`Country.from_string` normalizes codes and names (`"US"`, `"us"`, `"United States"`,
-`"USA"`, …), so a validator can be built straight from a database column:
+`TaxValidationResult` omits the raw identifier, so it is safe to log or return from an API.
+
+## Validating Any Country
+
+`Country.from_string` normalizes codes and names — `"US"`, `"us"`, `"United States"`, and `"USA"` all resolve to `Country.US` — so a validator can be built straight from a stored country string, including one the library has no dedicated rules for:
 
 ```python
+# Built from a database column; the value may be an ISO code or a full name.
 validator = TaxValidator(Country.from_string(row.country))
+
+# A country without dedicated rules is still accepted and reported back.
+result = TaxValidator(Country.from_string("France")).validate(
+    "FR1234567", TaxIdentifierType.FOREIGN_TIN
+)
+result.country    # Country.FR
+result.valid      # True — generic plausibility check
+result.metadata   # None — no country-specific metadata
 ```
 
-Countries without dedicated rules fall back to generic normalization and a
-plausibility check, while still reporting the resolved country:
+An unrecognized country string raises `UnknownCountryError`:
 
 ```python
-validator = TaxValidator(Country.from_string("France"))
-
-result = validator.validate("FR1234567", TaxIdentifierType.FOREIGN_TIN)
-result.country    # Country.FR
-result.valid      # True (generic sanity check)
-result.metadata   # None (no country-specific metadata)
+Country.from_string("Atlantis")   # raises UnknownCountryError
 ```
 
-`validate` raises when the identifier is structurally malformed or its type is
-unsupported for the country; otherwise it returns a `TaxValidationResult` summary
-(which omits the raw identifier) whose `valid` flag reflects the structural checks:
+## Raising vs. Returning
+
+`validate` raises on malformed or unsupported input. A parseable-but-reserved identifier is *not* an error — it comes back with `valid=False`:
 
 ```python
 from tax_validation import InvalidTaxIdError, UnsupportedTaxIdTypeError
 
-# A parseable SSN returns a summary; reserved ranges set valid=False (no raise).
-validator.validate("666-12-3456", TaxIdentifierType.SSN).valid   # False
-
-# A wrong-length identifier raises.
-try:
-    validator.validate("123-45-67890", TaxIdentifierType.SSN)
-except InvalidTaxIdError:
-    ...  # 10 digits is not a valid SSN
-
-# A type the country does not handle raises.
-try:
-    TaxValidator(Country.US).validate("X1", TaxIdentifierType.FOREIGN_TIN)
-except UnsupportedTaxIdTypeError:
-    ...  # US rules only handle US identifier types
+validator.validate("666-12-3456", TaxIdentifierType.SSN).valid          # False — 666 is a reserved area
+validator.validate("123-45-67890", TaxIdentifierType.SSN)               # raises InvalidTaxIdError — 10 digits
+TaxValidator(Country.US).validate("X1", TaxIdentifierType.FOREIGN_TIN)  # raises UnsupportedTaxIdTypeError
 ```
 
-Use `TaxValidationResult.from_tax_identifier` when you prefer a non-raising helper
-that returns `None` for missing or malformed input:
+`TaxValidationResult.from_tax_identifier` is the non-raising counterpart — it returns `None` for missing or malformed input instead of raising:
 
 ```python
-from tax_validation import TaxValidationResult, Country, TaxIdentifierType
+from tax_validation import TaxValidationResult
 
 summary = TaxValidationResult.from_tax_identifier(
     country=Country.US, tax_id="12-3456789", tax_id_type=TaxIdentifierType.EIN
 )
-summary.valid    # True
+summary.valid   # True
 ```
 
-## Normalization utilities
+## Normalization Utilities
 
-The library provides normalization helpers and annotated Pydantic field types you
-can reuse in your own models:
+Reusable normalization helpers and annotated Pydantic field types you can drop into your own models:
 
 ```python
-from tax_validation import (
-    clean_us_tax_identifier,
-    format_us_ssn,
-    format_us_ein,
-    ComparableUsTaxIdentifier,
-)
+from tax_validation import clean_us_tax_identifier, format_us_ssn, format_us_ein, ComparableUsTaxIdentifier
 
-clean_us_tax_identifier(" 123-45-6789 ")            # "123456789"
-format_us_ssn("123456789")                          # "123-45-6789"
-format_us_ein("123456789")                          # "12-3456789"
-ComparableUsTaxIdentifier("123-45-6789") == "123456789"   # True (ignores formatting)
+clean_us_tax_identifier(" 123-45-6789 ")                  # "123456789"
+format_us_ssn("123456789")                                # "123-45-6789"
+format_us_ein("123456789")                                # "12-3456789"
+ComparableUsTaxIdentifier("123-45-6789") == "123456789"   # True — equality ignores formatting
 ```
+
+`NormalizedString` and `StringBool` are configurable annotated field types:
 
 ```python
 from tax_validation import BaseModel, NormalizedString, StringBool
@@ -114,23 +102,26 @@ class IntakeForm(BaseModel):
 
 
 form = IntakeForm(business_name="  acme llc ", consented="yes")
-form.business_name    # "ACME LLC"
-form.consented        # True
+form.business_name   # "ACME LLC"
+form.consented       # True
 ```
 
-## Masking tax identifiers
+`NormalizedString` collapses internal and edge whitespace first, then applies any of:
 
-Models that carry a `TaxIdField` can mask and unmask the value via the
-`TaxIdentifierPairMixin`:
+| Option | Effect |
+|--------|--------|
+| `normalize_to_uppercase` | Uppercase the value |
+| `normalize_to_lowercase` | Lowercase the value |
+| `normalize_to_titlecase` | Title-case the value |
+| `strip_non_digits` | Remove every non-digit character |
+| `strip_trailing_punctuation` | Drop trailing `.` and `,` from each token |
+
+## Masking Tax Identifiers
+
+A `TaxIdField` carries a country and identifier type and normalizes on construction. Mix in `TaxIdentifierPairMixin` to mask the value while keeping the original recoverable:
 
 ```python
-from tax_validation import (
-    BaseModel,
-    Country,
-    TaxIdentifierPairMixin,
-    TaxIdentifierType,
-    TaxIdField,
-)
+from tax_validation import BaseModel, Country, TaxIdentifierPairMixin, TaxIdentifierType, TaxIdField
 
 
 class ContractorTaxInfo(TaxIdentifierPairMixin, BaseModel):
@@ -139,26 +130,16 @@ class ContractorTaxInfo(TaxIdentifierPairMixin, BaseModel):
 
 
 record = ContractorTaxInfo(name="Jane Doe", tax_id="123-45-6789")
-record.tax_id == "123456789"                    # normalized on construction
+record.tax_id == "123456789"   # normalized on construction — equality ignores formatting
 
 masked = record.to_masked()
-masked.tax_id                                    # "*******6789"
-masked.to_unmask().tax_id == "123-45-6789"       # True
+masked.tax_id                  # "*******6789"
+masked.to_unmask().tax_id      # "123-45-6789" — original recovered
 ```
 
-## Package layout
-
-The top-level package holds country-agnostic scaffolding — `BaseModel`,
-`BaseEnum`, the `Country` enum and `Country.from_string`, the `TaxIdentifierType` /
-`TaxIdentifierOrigin` / `TinType` vocabulary, generic string normalization, the
-`CountryTaxRules` strategy and `get_country_rules` registry, the generic
-`TaxIdentifier`, `TaxValidationResult`, `TaxValidator`, and `TaxIdField`, and the
-`GenericTaxRules` fallback. Country-specific code lives in its own subpackage
-(`tax_validation.us`), which is also re-exported from the top level for convenience.
-
-## Development
+## Run Tests
 
 ```bash
-poetry install --all-extras
-poetry run pytest
+pip install -e ".[dev]"
+pytest -v
 ```
