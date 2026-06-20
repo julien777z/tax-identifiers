@@ -35,6 +35,16 @@ class TestCountryFromString:
 
     @pytest.mark.parametrize(
         "value",
+        ["UNKNOWN", "unknown", "  Unknown  "],
+        ids=["upper", "lower", "padded"],
+    )
+    def test_resolves_unknown_sentinel(self, value: str) -> None:
+        """Test that the UNKNOWN sentinel resolves through from_string."""
+
+        assert Country.from_string(value) == Country.UNKNOWN
+
+    @pytest.mark.parametrize(
+        "value",
         ["", "   ", "Notacountry", "XX"],
         ids=["empty", "whitespace", "unknown_name", "unknown_code"],
     )
@@ -56,8 +66,13 @@ class TestCountryFieldCoercion:
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [("United States", Country.US), ("us", Country.US), ("France", Country.FR)],
-        ids=["name", "lowercase_code", "other_name"],
+        [
+            ("United States", Country.US),
+            ("us", Country.US),
+            ("France", Country.FR),
+            ("unknown", Country.UNKNOWN),
+        ],
+        ids=["name", "lowercase_code", "other_name", "unknown_sentinel"],
     )
     def test_coerces_raw_country_strings(self, value: str, expected: Country) -> None:
         """Test that a country field accepts raw strings such as DB column values."""

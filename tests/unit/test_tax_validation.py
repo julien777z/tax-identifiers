@@ -67,6 +67,23 @@ class TestTaxValidationResultFromTaxIdentifier:
 
         assert summary is None
 
+    @pytest.mark.parametrize(
+        "country",
+        [Country.UNKNOWN, Country.FR],
+        ids=["unknown", "named_without_rules"],
+    )
+    @pytest.mark.parametrize("tax_id", ["", "   "], ids=["empty", "whitespace"])
+    def test_returns_none_for_empty_identifier(self, country: Country, tax_id: str) -> None:
+        """Test that an empty or whitespace identifier resolves to None for any country."""
+
+        summary = TaxValidationResult.from_tax_identifier(
+            country=country,
+            tax_id=tax_id,
+            tax_id_type=TaxIdentifierType.FOREIGN_TIN,
+        )
+
+        assert summary is None
+
     def test_excludes_raw_tax_id_from_summary(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that the serialized summary does not expose the raw tax identifier."""
 

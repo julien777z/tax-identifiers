@@ -3,6 +3,7 @@ import pytest
 from tax_identifiers import (
     Country,
     GenericTaxRules,
+    InvalidTaxIdError,
     TaxIdentifierType,
     TaxValidator,
     UnsupportedTaxIdTypeError,
@@ -88,3 +89,12 @@ class TestUnknownCountryValidation:
         assert result.country is Country.UNKNOWN
         assert result.valid is True
         assert result.metadata is None
+
+    @pytest.mark.parametrize("tax_id", ["", "   "], ids=["empty", "whitespace"])
+    def test_validator_rejects_empty_identifier(self, tax_id: str) -> None:
+        """Test that the unknown-country validator rejects an empty identifier."""
+
+        validator = TaxValidator(Country.UNKNOWN)
+
+        with pytest.raises(InvalidTaxIdError):
+            validator.validate(tax_id, TaxIdentifierType.FOREIGN_TIN)

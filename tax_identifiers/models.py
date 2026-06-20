@@ -21,6 +21,9 @@ class TaxIdentifier(BaseModel):
     def normalize_tax_identifier(self) -> Self:
         """Normalize the tax identifier using its country's rules."""
 
+        if not self.tax_id.strip():
+            raise ValueError("Tax identifier must not be empty")
+
         self.tax_id = get_country_rules(self.country).normalize(self.tax_id, self.tax_id_type)
 
         return self

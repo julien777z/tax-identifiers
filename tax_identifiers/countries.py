@@ -6,7 +6,7 @@ from tax_identifiers.normalization import collapse_whitespace
 
 
 def normalize_country_code(value: str) -> str:
-    """Normalize a country code or name to an ISO 3166-1 alpha-2 country code."""
+    """Normalize a country code or name to a Country member's alpha-2 code."""
 
     if not isinstance(value, str):
         raise UnknownCountryError("Country must be a string")
@@ -16,10 +16,16 @@ def normalize_country_code(value: str) -> str:
     if not normalized:
         raise UnknownCountryError("Country is required")
 
+    if normalized.upper() == Country.UNKNOWN.value:
+        return Country.UNKNOWN.value
+
     try:
         country = pycountry.countries.lookup(normalized)
     except LookupError as exc:
         raise UnknownCountryError(f"Unknown country: {value!r}") from exc
+
+    if country.alpha_2 not in Country.__members__:
+        raise UnknownCountryError(f"Unknown country: {value!r}")
 
     return country.alpha_2
 
