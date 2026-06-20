@@ -1,6 +1,7 @@
 from typing import Final, Self
 
 MASK_CHARACTER: Final[str] = "*"
+MASK_REJECTION_MESSAGE: Final[str] = "Tax ID cannot contain mask characters"
 
 
 class MaskableTaxId(str):

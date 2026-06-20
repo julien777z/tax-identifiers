@@ -131,8 +131,14 @@ class TestTaxIdField:
     def test_rejects_masked_value_by_default(self) -> None:
         """Test that a masked tax identifier is rejected unless masking is allowed."""
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="Tax ID cannot contain mask characters"):
             UsTaxIdHolder(tax_id=mask_tax_id("123456789"))
+
+    def test_rejects_non_string_value(self) -> None:
+        """Test that a non-string tax identifier is rejected without a type error."""
+
+        with pytest.raises(ValidationError):
+            UsTaxIdHolder(tax_id=123456789)
 
     def test_accepts_masked_value_when_configured(self) -> None:
         """Test that a masked tax identifier passes through when masking is allowed."""

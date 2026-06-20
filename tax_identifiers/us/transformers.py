@@ -1,6 +1,7 @@
 from typing import Final
 
 from tax_identifiers.enums import TaxIdentifierOrigin, TinType
+from tax_identifiers.masking import MASK_REJECTION_MESSAGE
 from tax_identifiers.normalization import collapse_whitespace
 from tax_identifiers.us.enums import USState
 from tax_identifiers.us.tax_identifiers import clean_us_tax_identifier
@@ -49,7 +50,7 @@ def transform_tax_identifier(
         return None
 
     if "*" in normalized_value:
-        raise ValueError("Tax ID cannot contain mask characters")
+        raise ValueError(MASK_REJECTION_MESSAGE)
 
     if requires_us_cleaning(origin, tin_type):
         return clean_us_tax_identifier(normalized_value)
