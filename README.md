@@ -35,7 +35,7 @@ result.metadata.issued_years   # e.g. "1936-1950"
 validator = TaxValidator(Country.from_string(row.country))   # ISO code or full name
 ```
 
-Only countries with dedicated rules can be validated. Rather than guess, validating a country the library has no rules for raises `NotImplementedError`:
+Only countries with dedicated rules can be validated, other country validators raise `NotImplementedError`:
 
 ```python
 TaxValidator(Country.from_string("France")).validate(
@@ -49,7 +49,7 @@ An unrecognized country string raises `UnknownCountryError`:
 Country.from_string("Atlantis")   # raises UnknownCountryError
 ```
 
-## Raising vs. Returning
+## Error Handling
 
 `validate` raises on malformed or unsupported input. A parseable-but-reserved identifier is *not* an error — it comes back with `valid=False`:
 
