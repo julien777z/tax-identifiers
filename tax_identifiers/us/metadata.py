@@ -1,10 +1,11 @@
-import json
+import pickle
+from functools import cache
 from pathlib import Path
 from typing import Final, Self, TypedDict
 
-from tax_validation.metadata import TaxIdentifierMetadata
-from tax_validation.us.fields import USStateField
-from tax_validation.us.tax_identifiers import clean_us_tax_identifier
+from tax_identifiers.metadata import TaxIdentifierMetadata
+from tax_identifiers.us.fields import USStateField
+from tax_identifiers.us.tax_identifiers import clean_us_tax_identifier
 
 
 class SSNAllocationEntry(TypedDict):
@@ -15,28 +16,25 @@ class SSNAllocationEntry(TypedDict):
 
 
 STATIC_DIR: Final[Path] = Path(__file__).resolve().parent / "static"
-SSN_ALLOCATION_FILE: Final[Path] = STATIC_DIR / "ssn_allocation.json"
-SSN_ALLOCATION_DATA: Final[dict[str, SSNAllocationEntry]] = {}
+SSN_ALLOCATION_FILE: Final[Path] = STATIC_DIR / "ssn_allocation.pkl"
 
 
-def initialize_dataset() -> None:
-    """Load the SSN allocation dataset into memory once."""
-
-    if SSN_ALLOCATION_DATA:
-        return
+@cache
+def get_ssn_allocation_data() -> dict[str, SSNAllocationEntry]:
+    """Load and cache the SSN allocation dataset on first use."""
 
     try:
-        with SSN_ALLOCATION_FILE.open(encoding="utf-8") as allocation_file:
-            payload = json.load(allocation_file)
+        with SSN_ALLOCATION_FILE.open("rb") as allocation_file:
+            payload = pickle.load(allocation_file)
     except FileNotFoundError as exc:
         raise RuntimeError(f"SSN allocation dataset file not found: {SSN_ALLOCATION_FILE}") from exc
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"SSN allocation dataset is not valid JSON: {SSN_ALLOCATION_FILE}") from exc
+    except pickle.UnpicklingError as exc:
+        raise RuntimeError(f"SSN allocation dataset is not a valid pickle: {SSN_ALLOCATION_FILE}") from exc
 
     if not isinstance(payload, dict) or not payload:
         raise ValueError("SSN allocation dataset must be a non-empty mapping.")
 
-    SSN_ALLOCATION_DATA.update(payload)
+    return payload
 
 
 class SSNValidation(TaxIdentifierMetadata):
@@ -67,12 +65,9 @@ class SSNValidation(TaxIdentifierMetadata):
 
         area_number = normalized[:3]
         group_number = normalized[3:5]
-        allocation = SSN_ALLOCATION_DATA.get(area_number)
+        allocation = get_ssn_allocation_data().get(area_number)
 
         if allocation is None:
             return None, None
 
         return allocation["state"], allocation["groups"].get(group_number)
-
-
-initialize_dataset()

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from tax_validation import BaseModel, Country, UnknownCountryError
+from tax_identifiers import BaseModel, Country, UnknownCountryError
 
 
 class CountryHolder(BaseModel):

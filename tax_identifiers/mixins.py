@@ -2,10 +2,10 @@ from typing import Self
 
 from pydantic import model_validator
 
-from tax_validation.countries import Country
-from tax_validation.enums import TaxIdentifierType
-from tax_validation.fields import TaxIdFieldOptions
-from tax_validation.rules import get_country_rules
+from tax_identifiers.countries import Country
+from tax_identifiers.enums import TaxIdentifierType
+from tax_identifiers.fields import TaxIdFieldOptions
+from tax_identifiers.rules import get_country_rules
 
 
 def mask_tax_id(value: str) -> str:

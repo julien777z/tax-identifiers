@@ -1,4 +1,4 @@
-from tax_validation.base import BaseModel
+from tax_identifiers.base import BaseModel
 
 
 class TaxIdentifierMetadata(BaseModel):

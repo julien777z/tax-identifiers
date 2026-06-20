@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from functools import cache
 
-from tax_validation.countries import Country
-from tax_validation.enums import TaxIdentifierType
-from tax_validation.metadata import TaxIdentifierMetadata
+from tax_identifiers.countries import Country
+from tax_identifiers.enums import TaxIdentifierType
+from tax_identifiers.metadata import TaxIdentifierMetadata
 
 
 class CountryTaxRules(ABC):
@@ -42,10 +42,10 @@ def get_country_rules(country: Country) -> CountryTaxRules:
     # dependency on country packages and no import cycle forms through the registry.
     match country:
         case Country.US:
-            from tax_validation.us.rules import UsTaxRules
+            from tax_identifiers.us.rules import UsTaxRules
 
             return UsTaxRules()
         case _:
-            from tax_validation.generic import GenericTaxRules
+            from tax_identifiers.generic import GenericTaxRules
 
             return GenericTaxRules(country)

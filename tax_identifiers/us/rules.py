@@ -1,15 +1,15 @@
-from tax_validation.countries import Country
-from tax_validation.enums import TaxIdentifierOrigin, TaxIdentifierType
-from tax_validation.metadata import TaxIdentifierMetadata
-from tax_validation.rules import CountryTaxRules
-from tax_validation.us.metadata import SSNValidation
-from tax_validation.us.tax_identifiers import (
+from tax_identifiers.countries import Country
+from tax_identifiers.enums import TaxIdentifierOrigin, TaxIdentifierType
+from tax_identifiers.metadata import TaxIdentifierMetadata
+from tax_identifiers.rules import CountryTaxRules
+from tax_identifiers.us.metadata import SSNValidation
+from tax_identifiers.us.tax_identifiers import (
     US_TAX_IDENTIFIER_TYPES,
     ComparableUsTaxIdentifier,
     clean_us_tax_identifier,
     is_us_tax_identifier_type,
 )
-from tax_validation.us.transformers import transform_tax_identifier
+from tax_identifiers.us.transformers import transform_tax_identifier
 
 
 class UsTaxRules(CountryTaxRules):

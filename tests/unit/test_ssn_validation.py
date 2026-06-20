@@ -1,7 +1,9 @@
+import json
+
 import pytest
 
-from tax_validation import SSNValidation, USState
-from tax_validation.us.metadata import SSNAllocationEntry
+from tax_identifiers import SSNValidation, USState
+from tax_identifiers.us.metadata import STATIC_DIR, SSNAllocationEntry, get_ssn_allocation_data
 
 
 class TestSSNValidationFromTaxIdentifier:
@@ -42,3 +44,15 @@ class TestSSNValidationFromTaxIdentifier:
         """Test that an identifier without nine digits resolves to None."""
 
         assert SSNValidation.from_tax_identifier(tax_id) is None
+
+
+class TestSSNAllocationDataset:
+    """Tests for the shipped SSN allocation dataset."""
+
+    def test_pickle_matches_json_source(self) -> None:
+        """Test that the loaded pickle matches the JSON source of truth."""
+
+        with (STATIC_DIR / "ssn_allocation.json").open(encoding="utf-8") as source_file:
+            json_data = json.load(source_file)
+
+        assert get_ssn_allocation_data() == json_data

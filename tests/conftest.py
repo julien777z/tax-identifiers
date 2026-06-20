@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 import pytest
 
-from tax_validation import (
+from tax_identifiers import (
     BaseModel,
     Country,
     TaxIdentifier,
@@ -13,8 +13,8 @@ from tax_validation import (
     TaxValidator,
     USState,
 )
-from tax_validation.us import metadata as us_metadata
-from tax_validation.us.metadata import SSNAllocationEntry
+from tax_identifiers.us import metadata as us_metadata
+from tax_identifiers.us.metadata import SSNAllocationEntry
 
 FOREIGN_TAX_ID_PREFIX = "GB"
 
@@ -87,6 +87,6 @@ def ssn_allocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, SSNAllocationEn
         "212": {"state": USState.MARYLAND.value, "groups": {"01": "1936-1950"}},
         "100": {"state": USState.NEW_YORK.value, "groups": {"12": "1977-1978"}},
     }
-    monkeypatch.setattr(us_metadata, "SSN_ALLOCATION_DATA", dataset)
+    monkeypatch.setattr(us_metadata, "get_ssn_allocation_data", lambda: dataset)
 
     return dataset

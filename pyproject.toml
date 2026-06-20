@@ -1,5 +1,5 @@
 [project]
-name = "tax-validation"
+name = "tax-identifiers"
 version = "0.0.1"
 description = "Validate tax identifiers and resolve their metadata with Pydantic"
 authors = [
@@ -39,11 +39,12 @@ tests = "scripts.run_tests:main"
 
 [tool.poetry]
 packages = [
-    {include = "tax_validation"},
+    {include = "tax_identifiers"},
     {include = "scripts"},
 ]
 include = [
-    { path = "tax_validation/us/static/*.json", format = ["sdist", "wheel"] },
+    { path = "tax_identifiers/us/static/*.pkl", format = ["sdist", "wheel"] },
+    { path = "tax_identifiers/us/static/*.json", format = ["sdist"] },
 ]
 
 [build-system]

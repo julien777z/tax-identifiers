@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 import pytest
 
-from tax_validation import (
+from tax_identifiers import (
     Country,
     InvalidTaxIdError,
     SSNValidation,
@@ -12,7 +12,7 @@ from tax_validation import (
     UnsupportedTaxIdTypeError,
     UsTaxRules,
 )
-from tax_validation.us.metadata import SSNAllocationEntry
+from tax_identifiers.us.metadata import SSNAllocationEntry
 
 
 class TestUsTaxValidatorCountry:

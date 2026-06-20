@@ -4,10 +4,10 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BeforeValidator
 
-from tax_validation.countries import Country
-from tax_validation.enums import TaxIdentifierType
-from tax_validation.normalization import build_string_normalizer, transform_required_string
-from tax_validation.rules import get_country_rules
+from tax_identifiers.countries import Country
+from tax_identifiers.enums import TaxIdentifierType
+from tax_identifiers.normalization import build_string_normalizer, transform_required_string
+from tax_identifiers.rules import get_country_rules
 
 
 def NormalizedString(  # pylint: disable=invalid-name

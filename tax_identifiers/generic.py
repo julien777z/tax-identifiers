@@ -1,10 +1,10 @@
 from typing import Final
 
-from tax_validation.countries import Country
-from tax_validation.enums import TaxIdentifierType
-from tax_validation.metadata import TaxIdentifierMetadata
-from tax_validation.normalization import collapse_whitespace
-from tax_validation.rules import CountryTaxRules
+from tax_identifiers.countries import Country
+from tax_identifiers.enums import TaxIdentifierType
+from tax_identifiers.metadata import TaxIdentifierMetadata
+from tax_identifiers.normalization import collapse_whitespace
+from tax_identifiers.rules import CountryTaxRules
 
 GENERIC_SUPPORTED_TYPES: Final[frozenset[TaxIdentifierType]] = frozenset(
     {TaxIdentifierType.FOREIGN_TIN, TaxIdentifierType.NONE}

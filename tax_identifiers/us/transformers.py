@@ -1,9 +1,9 @@
 from typing import Final
 
-from tax_validation.enums import TaxIdentifierOrigin, TinType
-from tax_validation.normalization import collapse_whitespace
-from tax_validation.us.enums import USState
-from tax_validation.us.tax_identifiers import clean_us_tax_identifier
+from tax_identifiers.enums import TaxIdentifierOrigin, TinType
+from tax_identifiers.normalization import collapse_whitespace
+from tax_identifiers.us.enums import USState
+from tax_identifiers.us.tax_identifiers import clean_us_tax_identifier
 
 US_STATE_BY_CODE: Final[dict[str, USState]] = {state.value: state for state in USState}
 US_STATE_BY_NAME: Final[dict[str, USState]] = {

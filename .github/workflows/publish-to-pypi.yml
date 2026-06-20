@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/project/tax-validation/
+      url: https://pypi.org/project/tax-identifiers/
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

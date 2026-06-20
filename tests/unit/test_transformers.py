@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 import pytest
 
-from tax_validation import (
+from tax_identifiers import (
     TaxIdentifierOrigin,
     TaxIdentifierType,
     TinType,

@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from tax_validation import (
+from tax_identifiers import (
     BaseModel,
     Country,
     TaxIdentifierPairMixin,

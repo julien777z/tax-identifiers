@@ -1,8 +1,8 @@
 import pycountry
 
-from tax_validation.enums import BaseEnum
-from tax_validation.exceptions import UnknownCountryError
-from tax_validation.normalization import collapse_whitespace
+from tax_identifiers.enums import BaseEnum
+from tax_identifiers.exceptions import UnknownCountryError
+from tax_identifiers.normalization import collapse_whitespace
 
 
 def normalize_country_code(value: str) -> str:

@@ -1,7 +1,7 @@
 from typing import Final, Self
 
-from tax_validation.enums import TaxIdentifierType
-from tax_validation.normalization import strip_non_digits
+from tax_identifiers.enums import TaxIdentifierType
+from tax_identifiers.normalization import strip_non_digits
 
 US_TAX_IDENTIFIER_TYPES: Final[frozenset[TaxIdentifierType]] = frozenset(
     {

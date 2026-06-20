@@ -3,11 +3,11 @@ from typing import Self
 
 from pydantic import Field, SerializeAsAny, ValidationError, computed_field, model_validator
 
-from tax_validation.base import BaseModel
-from tax_validation.countries import Country
-from tax_validation.enums import TaxIdentifierType
-from tax_validation.metadata import TaxIdentifierMetadata
-from tax_validation.rules import get_country_rules
+from tax_identifiers.base import BaseModel
+from tax_identifiers.countries import Country
+from tax_identifiers.enums import TaxIdentifierType
+from tax_identifiers.metadata import TaxIdentifierMetadata
+from tax_identifiers.rules import get_country_rules
 
 
 class TaxIdentifier(BaseModel):
@@ -76,7 +76,7 @@ class TaxValidationResult(BaseModel):
         tax_id: str | None,
         tax_id_type: TaxIdentifierType | None,
     ) -> Self | None:
-        """Build a validation summary from a raw identifier and type, or None when absent or malformed."""
+        """Build a validation summary, or None for missing or malformed input; raises NotImplementedError for countries without dedicated rules."""
 
         if tax_id is None or tax_id_type is None:
             return None

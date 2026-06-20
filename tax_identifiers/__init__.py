@@ -1,29 +1,29 @@
-from tax_validation.base import BaseModel
-from tax_validation.countries import Country, normalize_country_code
-from tax_validation.enums import (
+from tax_identifiers.base import BaseModel
+from tax_identifiers.countries import Country, normalize_country_code
+from tax_identifiers.enums import (
     BaseEnum,
     TaxIdentifierOrigin,
     TaxIdentifierType,
     TinType,
 )
-from tax_validation.exceptions import (
+from tax_identifiers.exceptions import (
     InvalidTaxIdError,
     TaxValidationError,
     UnknownCountryError,
     UnsupportedTaxIdTypeError,
 )
-from tax_validation.fields import (
+from tax_identifiers.fields import (
     NormalizedString,
     StrRequired,
     StringBool,
     TaxIdField,
     TaxIdFieldOptions,
 )
-from tax_validation.generic import GenericTaxRules
-from tax_validation.metadata import TaxIdentifierMetadata
-from tax_validation.mixins import TaxIdentifierPairMixin, mask_tax_id
-from tax_validation.models import TaxIdentifier, TaxValidationResult
-from tax_validation.normalization import (
+from tax_identifiers.generic import GenericTaxRules
+from tax_identifiers.metadata import TaxIdentifierMetadata
+from tax_identifiers.mixins import TaxIdentifierPairMixin, mask_tax_id
+from tax_identifiers.models import TaxIdentifier, TaxValidationResult
+from tax_identifiers.normalization import (
     NON_DIGIT_PATTERN,
     build_string_normalizer,
     collapse_whitespace,
@@ -31,8 +31,8 @@ from tax_validation.normalization import (
     strip_non_digits,
     transform_required_string,
 )
-from tax_validation.rules import CountryTaxRules, get_country_rules
-from tax_validation.us import (
+from tax_identifiers.rules import CountryTaxRules, get_country_rules
+from tax_identifiers.us import (
     US_TAX_IDENTIFIER_TYPES,
     ComparableUsTaxIdentifier,
     EINFormattedField,
@@ -51,7 +51,7 @@ from tax_validation.us import (
     transform_tax_identifier,
     transform_us_state,
 )
-from tax_validation.validators import TaxValidator
+from tax_identifiers.validators import TaxValidator
 
 __all__ = [
     "BaseEnum",

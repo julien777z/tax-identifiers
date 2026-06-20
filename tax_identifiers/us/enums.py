@@ -1,4 +1,4 @@
-from tax_validation.enums import BaseEnum
+from tax_identifiers.enums import BaseEnum
 
 
 class USState(BaseEnum):

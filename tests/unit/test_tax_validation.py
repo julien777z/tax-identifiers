@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 import pytest
 
-from tax_validation import Country, TaxIdentifierType, TaxValidationResult
+from tax_identifiers import Country, TaxIdentifierType, TaxValidationResult
 
 
 class TestTaxValidationResultFromTaxIdentifier:
@@ -78,3 +78,13 @@ class TestTaxValidationResultFromTaxIdentifier:
 
         assert summary is not None
         assert "tax_id" not in summary.model_dump()
+
+    def test_raises_for_country_without_rules(self) -> None:
+        """Test that summarizing a country without dedicated rules raises NotImplementedError."""
+
+        with pytest.raises(NotImplementedError):
+            TaxValidationResult.from_tax_identifier(
+                country=Country.FR,
+                tax_id="FR1234567",
+                tax_id_type=TaxIdentifierType.FOREIGN_TIN,
+            )
