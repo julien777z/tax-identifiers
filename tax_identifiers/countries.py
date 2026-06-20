@@ -25,8 +25,9 @@ def normalize_country_code(value: str) -> str:
 
 
 class Country(BaseEnum):
-    """ISO 3166-1 alpha-2 country a tax identifier can belong to."""
+    """ISO 3166-1 alpha-2 country a tax identifier can belong to, plus an UNKNOWN sentinel."""
 
+    UNKNOWN = "UNKNOWN"
     US = "US"
     AD = "AD"
     AE = "AE"

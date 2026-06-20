@@ -6,6 +6,7 @@ from tax_identifiers import (
     TaxIdentifierType,
     TaxValidator,
     UnsupportedTaxIdTypeError,
+    get_country_rules,
 )
 
 
@@ -53,3 +54,8 @@ class TestGenericTaxRules:
         rules = GenericTaxRules(Country.FR)
 
         assert rules.resolve_metadata("fr1234567", TaxIdentifierType.FOREIGN_TIN) is None
+
+    def test_unknown_country_uses_generic_rules(self) -> None:
+        """Test that the UNKNOWN country dispatches to generic rules."""
+
+        assert isinstance(get_country_rules(Country.UNKNOWN), GenericTaxRules)

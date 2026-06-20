@@ -136,6 +136,8 @@ masked.tax_id                  # "*******6789"
 masked.to_unmask().tax_id      # "123-45-6789" — original recovered
 ```
 
+`TaxIdField` defaults to `Country.UNKNOWN` — a country-agnostic field that normalizes (uppercases) but is never validated. Pass `country=Country.US` to apply a country's rules.
+
 ## Run Tests
 
 ```bash

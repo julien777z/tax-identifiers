@@ -53,6 +53,18 @@ class MaskedTaxIdHolder(BaseModel):
     tax_id: TaxIdField(country=Country.US, allow_masked=True)
 
 
+class UnknownTaxIdHolder(BaseModel):
+    """Test model with a country-agnostic tax identifier field."""
+
+    tax_id: TaxIdField(country=Country.UNKNOWN)
+
+
+class DefaultTaxIdHolder(BaseModel):
+    """Test model relying on the default (unknown) country for the tax identifier field."""
+
+    tax_id: TaxIdField()
+
+
 class TestNormalizedString:
     """Tests for the configurable string normalizer field."""
 
@@ -126,3 +138,21 @@ class TestTaxIdField:
         holder = MaskedTaxIdHolder(tax_id="*****6789")
 
         assert holder.tax_id == "*****6789"
+
+
+class TestUnknownCountryTaxIdField:
+    """Tests for the country-agnostic (unknown) tax identifier field."""
+
+    def test_normalizes_generically(self) -> None:
+        """Test that an unknown-country field uppercases without US cleaning."""
+
+        holder = UnknownTaxIdHolder(tax_id="  fr-12 ab ")
+
+        assert holder.tax_id == "FR-12 AB"
+
+    def test_defaults_to_unknown_country(self) -> None:
+        """Test that the tax identifier field defaults to the unknown country."""
+
+        holder = DefaultTaxIdHolder(tax_id=" ab-12 ")
+
+        assert holder.tax_id == "AB-12"

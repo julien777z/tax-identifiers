@@ -88,7 +88,7 @@ def normalize_tax_id_field(
 
 def TaxIdField(  # pylint: disable=invalid-name
     *,
-    country: Country,
+    country: Country = Country.UNKNOWN,
     tax_id_type: TaxIdentifierType = TaxIdentifierType.US_UNSPECIFIED,
     allow_masked: bool = False,
 ) -> object:
