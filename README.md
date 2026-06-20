@@ -10,7 +10,7 @@ pip install tax-validation
 
 ## Quick Start
 
-Construct a `TaxValidator` for a country and validate an identifier — the validator normalizes the value, applies that country's structural rules, and resolves any metadata. The United States has dedicated rules (SSN, EIN, ITIN).
+Construct a `TaxValidator` for a country and validate an identifier — the validator normalizes the value, applies that country's structural rules, and resolves any metadata. Currently, only the US validators have dedicated validation rules; every other country falls back to generic normalization.
 
 ```python
 from tax_validation import TaxValidator, Country, TaxIdentifierType
