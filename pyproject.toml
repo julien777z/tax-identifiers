@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/julien777z/tax-validation"
+Repository = "https://github.com/julien777z/tax-identifiers"
 
 [project.optional-dependencies]
 dev = [
