@@ -5,16 +5,8 @@ from pydantic import model_validator
 from tax_identifiers.countries import Country
 from tax_identifiers.enums import TaxIdentifierType
 from tax_identifiers.fields import TaxIdFieldOptions
+from tax_identifiers.masking import is_masked_tax_id, mask_tax_id
 from tax_identifiers.rules import get_country_rules
-
-
-def mask_tax_id(value: str) -> str:
-    """Mask a tax ID, preserving the last 4 characters."""
-
-    if len(value) <= 4:
-        return "*" * len(value)
-
-    return "*" * (len(value) - 4) + value[-4:]
 
 
 class TaxIdentifierPairMixin:
@@ -38,7 +30,7 @@ class TaxIdentifierPairMixin:
             if not isinstance(value, str):
                 continue
 
-            if "*" in value and options.allow_masked:
+            if is_masked_tax_id(value):
                 continue
 
             normalized = get_country_rules(options.country).normalize(value, options.tax_id_type)

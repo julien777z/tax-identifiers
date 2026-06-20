@@ -50,6 +50,12 @@ def build_string_normalizer(
 ) -> Callable[[str], str]:
     """Build a composable string normalizer from normalization options."""
 
+    if sum([normalize_to_uppercase, normalize_to_lowercase, normalize_to_titlecase]) > 1:
+        raise ValueError(
+            "Only one of normalize_to_uppercase, normalize_to_lowercase, "
+            "or normalize_to_titlecase may be set."
+        )
+
     def _normalize(value: str) -> str:
         result = collapse_whitespace(value)
 

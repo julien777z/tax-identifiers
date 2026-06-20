@@ -14,6 +14,8 @@ from tax_identifiers import (
     USState,
     USStateField,
     format_us_ssn,
+    is_masked_tax_id,
+    mask_tax_id,
 )
 
 
@@ -126,18 +128,20 @@ class TestTaxIdField:
         assert isinstance(holder.tax_id, ComparableUsTaxIdentifier)
         assert holder.tax_id == raw_tax_id
 
-    def test_rejects_mask_characters_by_default(self) -> None:
-        """Test that masked input is rejected unless masking is allowed."""
+    def test_rejects_masked_value_by_default(self) -> None:
+        """Test that a masked tax identifier is rejected unless masking is allowed."""
 
         with pytest.raises(ValidationError):
-            UsTaxIdHolder(tax_id="*****6789")
+            UsTaxIdHolder(tax_id=mask_tax_id("123456789"))
 
-    def test_allows_mask_characters_when_configured(self) -> None:
-        """Test that masked input passes through when masking is allowed."""
+    def test_accepts_masked_value_when_configured(self) -> None:
+        """Test that a masked tax identifier passes through when masking is allowed."""
 
-        holder = MaskedTaxIdHolder(tax_id="*****6789")
+        masked = mask_tax_id("123456789")
+        holder = MaskedTaxIdHolder(tax_id=masked)
 
-        assert holder.tax_id == "*****6789"
+        assert holder.tax_id == masked
+        assert is_masked_tax_id(holder.tax_id)
 
 
 class TestUnknownCountryTaxIdField:

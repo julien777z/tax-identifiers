@@ -20,8 +20,9 @@ from tax_identifiers.fields import (
     TaxIdFieldOptions,
 )
 from tax_identifiers.generic import GenericTaxRules
+from tax_identifiers.masking import MaskableTaxId, is_masked_tax_id, mask_tax_id
 from tax_identifiers.metadata import TaxIdentifierMetadata
-from tax_identifiers.mixins import TaxIdentifierPairMixin, mask_tax_id
+from tax_identifiers.mixins import TaxIdentifierPairMixin
 from tax_identifiers.models import TaxIdentifier, TaxValidationResult
 from tax_identifiers.normalization import (
     NON_DIGIT_PATTERN,
@@ -74,6 +75,8 @@ __all__ = [
     "TaxValidator",
     "TaxIdentifierPairMixin",
     "mask_tax_id",
+    "MaskableTaxId",
+    "is_masked_tax_id",
     "TaxIdField",
     "TaxIdFieldOptions",
     "NormalizedString",

@@ -60,6 +60,12 @@ class TestBuildStringNormalizer:
 
         assert normalizer(value) == expected
 
+    def test_rejects_conflicting_case_options(self) -> None:
+        """Test that setting more than one case option raises a ValueError."""
+
+        with pytest.raises(ValueError):
+            build_string_normalizer(normalize_to_uppercase=True, normalize_to_lowercase=True)
+
 
 class TestEmptyStrToNone:
     """Tests for empty-string to None conversion."""

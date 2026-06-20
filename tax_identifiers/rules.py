@@ -38,8 +38,6 @@ class CountryTaxRules(ABC):
 def get_country_rules(country: Country) -> CountryTaxRules:
     """Return the tax rules for a country, falling back to generic rules."""
 
-    # Country rule modules are imported lazily so the generic layer keeps no static
-    # dependency on country packages and no import cycle forms through the registry.
     match country:
         case Country.US:
             from tax_identifiers.us.rules import UsTaxRules

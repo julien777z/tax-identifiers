@@ -2,10 +2,11 @@ from collections.abc import Callable
 from functools import partial
 from typing import Annotated
 
-from pydantic import AfterValidator, BeforeValidator
+from pydantic import AfterValidator, BeforeValidator, ValidatorFunctionWrapHandler, WrapValidator
 
 from tax_identifiers.countries import Country
 from tax_identifiers.enums import TaxIdentifierType
+from tax_identifiers.masking import is_masked_tax_id
 from tax_identifiers.normalization import build_string_normalizer, transform_required_string
 from tax_identifiers.rules import get_country_rules
 
@@ -70,20 +71,21 @@ class TaxIdFieldOptions:
 
 def normalize_tax_id_field(
     value: str,
+    handler: ValidatorFunctionWrapHandler,
     *,
     country: Country,
     tax_id_type: TaxIdentifierType,
     allow_masked: bool,
 ) -> str:
-    """Normalize a tax ID field value via its country's rules, optionally allowing masked input."""
+    """Normalize a tax ID field value, accepting masked values only when allowed."""
 
-    if "*" in value:
+    if is_masked_tax_id(value):
         if allow_masked:
             return value
 
-        raise ValueError("Tax ID cannot contain mask characters")
+        raise ValueError("This field does not accept masked tax identifiers")
 
-    return get_country_rules(country).normalize(value, tax_id_type)
+    return get_country_rules(country).normalize(handler(value), tax_id_type)
 
 
 def TaxIdField(  # pylint: disable=invalid-name
@@ -102,7 +104,7 @@ def TaxIdField(  # pylint: disable=invalid-name
             tax_id_type=tax_id_type,
             allow_masked=allow_masked,
         ),
-        AfterValidator(
+        WrapValidator(
             partial(
                 normalize_tax_id_field,
                 country=country,
