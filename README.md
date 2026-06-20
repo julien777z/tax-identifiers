@@ -35,13 +35,15 @@ result.metadata.issued_years   # e.g. "1936-1950"
 validator = TaxValidator(Country.from_string(row.country))   # ISO code or full name
 ```
 
-Only countries with dedicated rules can be validated, other country validators raise `NotImplementedError`:
+A **named** country without dedicated rules can't assert validity — its validator raises `NotImplementedError`:
 
 ```python
 TaxValidator(Country.from_string("France")).validate(
     "FR1234567", TaxIdentifierType.FOREIGN_TIN
 )   # raises NotImplementedError — no validation rules for France
 ```
+
+`Country.UNKNOWN` is the country-agnostic exception: it accepts any non-empty identifier, so foreign identifiers of any shape validate against it.
 
 An unrecognized country string raises `UnknownCountryError`:
 

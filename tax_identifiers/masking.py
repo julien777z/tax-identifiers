@@ -1,4 +1,6 @@
-from typing import Self
+from typing import Final, Self
+
+MASK_CHARACTER: Final[str] = "*"
 
 
 class MaskableTaxId(str):
@@ -19,9 +21,9 @@ def mask_tax_id(value: str) -> MaskableTaxId:
     """Mask a tax ID, preserving the last 4 characters."""
 
     if len(value) <= 4:
-        masked = "*" * len(value)
+        masked = MASK_CHARACTER * len(value)
     else:
-        masked = "*" * (len(value) - 4) + value[-4:]
+        masked = MASK_CHARACTER * (len(value) - 4) + value[-4:]
 
     return MaskableTaxId(masked, is_masked=True)
 
@@ -30,3 +32,9 @@ def is_masked_tax_id(value: object) -> bool:
     """Return whether a value is a masked tax identifier string."""
 
     return isinstance(value, MaskableTaxId) and value.is_masked
+
+
+def contains_mask_characters(value: str) -> bool:
+    """Return whether a string contains tax identifier mask characters."""
+
+    return MASK_CHARACTER in value

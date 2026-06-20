@@ -6,7 +6,7 @@ from pydantic import AfterValidator, BeforeValidator, ValidatorFunctionWrapHandl
 
 from tax_identifiers.countries import Country
 from tax_identifiers.enums import TaxIdentifierType
-from tax_identifiers.masking import is_masked_tax_id
+from tax_identifiers.masking import MaskableTaxId, contains_mask_characters, is_masked_tax_id
 from tax_identifiers.normalization import build_string_normalizer, transform_required_string
 from tax_identifiers.rules import get_country_rules
 
@@ -79,9 +79,9 @@ def normalize_tax_id_field(
 ) -> str:
     """Normalize a tax ID field value, accepting masked values only when allowed."""
 
-    if is_masked_tax_id(value):
+    if is_masked_tax_id(value) or contains_mask_characters(value):
         if allow_masked:
-            return value
+            return MaskableTaxId(value, is_masked=True)
 
         raise ValueError("This field does not accept masked tax identifiers")
 

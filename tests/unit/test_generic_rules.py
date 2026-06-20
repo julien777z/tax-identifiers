@@ -13,8 +13,8 @@ from tax_identifiers import (
 class TestGenericTaxValidation:
     """Tests for tax identifiers of countries without dedicated rules."""
 
-    def test_validation_is_not_implemented(self) -> None:
-        """Test that validating a country without dedicated rules raises NotImplementedError."""
+    def test_named_country_validation_is_not_implemented(self) -> None:
+        """Test that validating a named country without dedicated rules raises NotImplementedError."""
 
         validator = TaxValidator(Country.from_string("France"))
 
@@ -59,3 +59,32 @@ class TestGenericTaxRules:
         """Test that the UNKNOWN country dispatches to generic rules."""
 
         assert isinstance(get_country_rules(Country.UNKNOWN), GenericTaxRules)
+
+
+class TestUnknownCountryValidation:
+    """Tests for the country-agnostic UNKNOWN validation behavior."""
+
+    def test_accepts_any_non_empty_identifier(self) -> None:
+        """Test that the unknown country accepts any non-empty identifier as valid."""
+
+        rules = GenericTaxRules(Country.UNKNOWN)
+
+        assert rules.is_valid("FR1234567", TaxIdentifierType.FOREIGN_TIN) is True
+
+    def test_rejects_empty_identifier(self) -> None:
+        """Test that the unknown country treats an empty identifier as invalid."""
+
+        rules = GenericTaxRules(Country.UNKNOWN)
+
+        assert rules.is_valid("", TaxIdentifierType.FOREIGN_TIN) is False
+
+    def test_validator_accepts_foreign_identifier_of_any_shape(self) -> None:
+        """Test that the unknown-country validator accepts a foreign identifier of any shape."""
+
+        validator = TaxValidator(Country.UNKNOWN)
+
+        result = validator.validate("FR-12 34 AB", TaxIdentifierType.FOREIGN_TIN)
+
+        assert result.country is Country.UNKNOWN
+        assert result.valid is True
+        assert result.metadata is None

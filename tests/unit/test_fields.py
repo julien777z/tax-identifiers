@@ -143,6 +143,14 @@ class TestTaxIdField:
         assert holder.tax_id == masked
         assert is_masked_tax_id(holder.tax_id)
 
+    def test_accepts_plain_masked_string_when_configured(self) -> None:
+        """Test that a plain masked string from a serialized payload is accepted."""
+
+        holder = MaskedTaxIdHolder(tax_id="*****6789")
+
+        assert holder.tax_id == "*****6789"
+        assert is_masked_tax_id(holder.tax_id)
+
 
 class TestUnknownCountryTaxIdField:
     """Tests for the country-agnostic (unknown) tax identifier field."""
