@@ -10,7 +10,7 @@ pip install tax-validation
 
 ## Quick Start
 
-Construct a `TaxValidator` for a country and validate an identifier — the validator normalizes the value, applies that country's structural rules, and resolves any metadata. The United States has dedicated rules (SSN, EIN, ITIN); every other country falls back to generic normalization and a plausibility check.
+Construct a `TaxValidator` for a country and validate an identifier — the validator normalizes the value, applies that country's structural rules, and resolves any metadata. The United States has dedicated rules (SSN, EIN, ITIN).
 
 ```python
 from tax_validation import TaxValidator, Country, TaxIdentifierType
@@ -27,21 +27,20 @@ result.metadata.issued_years   # e.g. "1936-1950"
 
 `TaxValidationResult` omits the raw identifier, so it is safe to log or return from an API.
 
-## Validating Any Country
+## Resolving Countries
 
-`Country.from_string` normalizes codes and names — `"US"`, `"us"`, `"United States"`, and `"USA"` all resolve to `Country.US` — so a validator can be built straight from a stored country string, including one the library has no dedicated rules for:
+`Country.from_string` normalizes codes and names — `"US"`, `"us"`, `"United States"`, and `"USA"` all resolve to `Country.US` — so a validator can be built straight from a stored country string:
 
 ```python
-# Built from a database column; the value may be an ISO code or a full name.
-validator = TaxValidator(Country.from_string(row.country))
+validator = TaxValidator(Country.from_string(row.country))   # ISO code or full name
+```
 
-# A country without dedicated rules is still accepted and reported back.
-result = TaxValidator(Country.from_string("France")).validate(
+Only countries with dedicated rules can be validated. Rather than guess, validating a country the library has no rules for raises `NotImplementedError`:
+
+```python
+TaxValidator(Country.from_string("France")).validate(
     "FR1234567", TaxIdentifierType.FOREIGN_TIN
-)
-result.country    # Country.FR
-result.valid      # True — generic plausibility check
-result.metadata   # None — no country-specific metadata
+)   # raises NotImplementedError — no validation rules for France
 ```
 
 An unrecognized country string raises `UnknownCountryError`:

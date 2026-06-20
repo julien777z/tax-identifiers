@@ -10,18 +10,15 @@ from tax_validation import (
 
 
 class TestGenericTaxValidation:
-    """Tests for validating tax identifiers of countries without dedicated rules."""
+    """Tests for tax identifiers of countries without dedicated rules."""
 
-    def test_validates_foreign_tin_generically(self) -> None:
-        """Test that a foreign TIN for a generic country validates and reports the country."""
+    def test_validation_is_not_implemented(self) -> None:
+        """Test that validating a country without dedicated rules raises NotImplementedError."""
 
         validator = TaxValidator(Country.from_string("France"))
 
-        result = validator.validate("fr1234567", TaxIdentifierType.FOREIGN_TIN)
-
-        assert result.country == Country.FR
-        assert result.valid is True
-        assert result.metadata is None
+        with pytest.raises(NotImplementedError):
+            validator.validate("FR1234567", TaxIdentifierType.FOREIGN_TIN)
 
     def test_rejects_us_specific_type_for_generic_country(self) -> None:
         """Test that a US-specific identifier type is unsupported for a generic country."""
@@ -33,7 +30,7 @@ class TestGenericTaxValidation:
 
 
 class TestGenericTaxRules:
-    """Tests for the country-agnostic normalization and validity checks."""
+    """Tests for the country-agnostic normalization and validity behavior."""
 
     def test_normalizes_to_uppercase(self) -> None:
         """Test that generic normalization collapses whitespace and uppercases."""
@@ -42,17 +39,13 @@ class TestGenericTaxRules:
 
         assert rules.normalize("  fr-12 ab ", TaxIdentifierType.FOREIGN_TIN) == "FR-12 AB"
 
-    @pytest.mark.parametrize(
-        "tax_id",
-        ["", "   ", "*"],
-        ids=["empty", "whitespace", "non_alphanumeric"],
-    )
-    def test_rejects_implausible_identifier(self, tax_id: str) -> None:
-        """Test that empty or non-alphanumeric identifiers are not valid."""
+    def test_is_valid_is_not_implemented(self) -> None:
+        """Test that validity cannot be determined without country-specific rules."""
 
         rules = GenericTaxRules(Country.FR)
 
-        assert rules.is_valid(tax_id, TaxIdentifierType.FOREIGN_TIN) is False
+        with pytest.raises(NotImplementedError):
+            rules.is_valid("FR1234567", TaxIdentifierType.FOREIGN_TIN)
 
     def test_resolves_no_metadata(self) -> None:
         """Test that generic rules resolve no country-specific metadata."""

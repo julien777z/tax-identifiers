@@ -9,8 +9,6 @@ from tax_validation.rules import CountryTaxRules
 GENERIC_SUPPORTED_TYPES: Final[frozenset[TaxIdentifierType]] = frozenset(
     {TaxIdentifierType.FOREIGN_TIN, TaxIdentifierType.NONE}
 )
-GENERIC_MIN_LENGTH: Final[int] = 2
-GENERIC_MAX_LENGTH: Final[int] = 30
 
 
 class GenericTaxRules(CountryTaxRules):
@@ -39,13 +37,9 @@ class GenericTaxRules(CountryTaxRules):
         return collapse_whitespace(tax_id).upper()
 
     def is_valid(self, tax_id: str, tax_id_type: TaxIdentifierType) -> bool:
-        """Return whether a normalized identifier is a plausible tax identifier."""
+        """Raise; validity cannot be asserted without country-specific rules."""
 
-        normalized = self.normalize(tax_id, tax_id_type)
-
-        return GENERIC_MIN_LENGTH <= len(normalized) <= GENERIC_MAX_LENGTH and any(
-            character.isalnum() for character in normalized
-        )
+        raise NotImplementedError(f"No tax identifier validation rules for {self._country}")
 
     def resolve_metadata(
         self, tax_id: str, tax_id_type: TaxIdentifierType
