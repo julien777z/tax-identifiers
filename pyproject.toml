@@ -1,0 +1,52 @@
+[project]
+name = "tax-identifiers"
+version = "0.0.1"
+description = "Validate tax identifiers and resolve their metadata with Pydantic"
+authors = [
+    { name = "Julien Kmec", email = "me@julien.dev" },
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "pydantic>=2.10.6",
+    "pydantic-super-model>=2.0.0",
+    "pycountry (>=24.6.1)",
+]
+
+[project.urls]
+Repository = "https://github.com/julien777z/tax-identifiers"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
+    "coverage>=7.8.0",
+]
+
+[tool.black]
+line-length = 110
+target-version = ["py311", "py312", "py313", "py314"]
+
+[tool.isort]
+profile = "black"
+line_length = 110
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[project.scripts]
+tests = "scripts.run_tests:main"
+
+[tool.poetry]
+packages = [
+    {include = "tax_identifiers"},
+    {include = "scripts"},
+]
+include = [
+    { path = "tax_identifiers/us/static/*.pkl", format = ["sdist", "wheel"] },
+    { path = "tax_identifiers/us/static/*.json", format = ["sdist"] },
+]
+
+[build-system]
+requires = ["poetry-core", "setuptools"]
+build-backend = "poetry.core.masonry.api"
