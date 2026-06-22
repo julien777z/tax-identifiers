@@ -8,11 +8,10 @@ from tax_identifiers import (
     SSNValidation,
     TaxIdentifierType,
     TaxValidator,
-    USState,
     UnsupportedTaxIdTypeError,
     UsTaxRules,
 )
-from tax_identifiers.us.metadata import SSNAllocationEntry
+from tests.conftest import AllocatedSsn
 
 
 class TestUsTaxValidatorCountry:
@@ -76,17 +75,15 @@ class TestUsTaxRulesResolveMetadata:
 
     def test_resolves_known_ssn(
         self,
-        ssn_allocation: dict[str, SSNAllocationEntry],
+        allocated_ssn_factory: Callable[..., AllocatedSsn],
     ) -> None:
         """Test that a known SSN resolves to issuing details."""
 
-        area, entry = next(iter(ssn_allocation.items()))
-        group = next(iter(entry["groups"]))
-
-        metadata = UsTaxRules().resolve_metadata(f"{area}{group}0001", TaxIdentifierType.SSN)
+        allocated = allocated_ssn_factory()
+        metadata = UsTaxRules().resolve_metadata(allocated.tax_id, TaxIdentifierType.SSN)
 
         assert isinstance(metadata, SSNValidation)
-        assert metadata.issued_state == USState(entry["state"])
+        assert metadata.issued_state == allocated.issued_state
 
     def test_returns_none_for_invalid_ssn(self) -> None:
         """Test that an SSN without nine digits resolves to None."""

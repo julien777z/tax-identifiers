@@ -1,9 +1,11 @@
 import json
+from collections.abc import Callable
 
 import pytest
 
-from tax_identifiers import SSNValidation, USState
+from tax_identifiers import SSNValidation
 from tax_identifiers.us.metadata import STATIC_DIR, SSNAllocationEntry, get_ssn_allocation_data
+from tests.conftest import AllocatedSsn
 
 
 class TestSSNValidationFromTaxIdentifier:
@@ -11,18 +13,16 @@ class TestSSNValidationFromTaxIdentifier:
 
     def test_resolves_known_area_and_group(
         self,
-        ssn_allocation: dict[str, SSNAllocationEntry],
+        allocated_ssn_factory: Callable[..., AllocatedSsn],
     ) -> None:
         """Test that a known area and group resolve to issuing state and years."""
 
-        area, entry = next(iter(ssn_allocation.items()))
-        group, years = next(iter(entry["groups"].items()))
-
-        validation = SSNValidation.from_tax_identifier(f"{area}{group}0001")
+        allocated = allocated_ssn_factory()
+        validation = SSNValidation.from_tax_identifier(allocated.tax_id)
 
         assert validation is not None
-        assert validation.issued_state == USState(entry["state"])
-        assert validation.issued_years == years
+        assert validation.issued_state == allocated.issued_state
+        assert validation.issued_years == allocated.issued_years
 
     def test_unknown_area_resolves_without_state(
         self,

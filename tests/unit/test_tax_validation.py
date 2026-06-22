@@ -3,6 +3,7 @@ from collections.abc import Callable
 import pytest
 
 from tax_identifiers import Country, TaxIdentifierType, TaxValidationResult
+from tests.conftest import AllocatedSsn
 
 
 class TestTaxValidationResultFromTaxIdentifier:
@@ -105,3 +106,25 @@ class TestTaxValidationResultFromTaxIdentifier:
                 tax_id="FR1234567",
                 tax_id_type=TaxIdentifierType.FOREIGN_TIN,
             )
+
+    def test_metadata_survives_validation_round_trip(
+        self, allocated_ssn_factory: Callable[..., AllocatedSsn]
+    ) -> None:
+        """Test that resolved metadata survives a dump/validate/dump cycle (FastAPI response_model behavior)."""
+
+        allocated = allocated_ssn_factory()
+        summary = TaxValidationResult.from_tax_identifier(
+            country=Country.US,
+            tax_id=allocated.tax_id,
+            tax_id_type=TaxIdentifierType.SSN,
+        )
+
+        assert summary is not None
+        dumped = summary.model_dump()
+
+        assert dumped["metadata"]["issued_state"] == allocated.issued_state
+        assert dumped["metadata"]["issued_years"] == allocated.issued_years
+
+        revalidated = TaxValidationResult.model_validate(dumped)
+
+        assert revalidated.model_dump()["metadata"] == dumped["metadata"]
