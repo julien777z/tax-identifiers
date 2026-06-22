@@ -1,6 +1,6 @@
 [project]
 name = "tax-identifiers"
-version = "0.0.2"
+version = "0.0.1"
 description = "Validate tax identifiers and resolve their metadata with Pydantic"
 authors = [
     { name = "Julien Kmec", email = "me@julien.dev" },
