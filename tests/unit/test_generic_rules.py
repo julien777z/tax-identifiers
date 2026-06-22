@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 
 from tax_identifiers import (
@@ -14,21 +16,25 @@ from tax_identifiers import (
 class TestGenericTaxValidation:
     """Tests for tax identifiers of countries without dedicated rules."""
 
-    def test_named_country_validation_is_not_implemented(self) -> None:
+    def test_named_country_validation_is_not_implemented(
+        self, tax_id_factory: Callable[..., str]
+    ) -> None:
         """Test that validating a named country without dedicated rules raises NotImplementedError."""
 
         validator = TaxValidator(Country.from_string("France"))
 
         with pytest.raises(NotImplementedError):
-            validator.validate("FR1234567", TaxIdentifierType.FOREIGN_TIN)
+            validator.validate(tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN)
 
-    def test_rejects_us_specific_type_for_generic_country(self) -> None:
+    def test_rejects_us_specific_type_for_generic_country(
+        self, tax_id_factory: Callable[..., str]
+    ) -> None:
         """Test that a US-specific identifier type is unsupported for a generic country."""
 
         validator = TaxValidator(Country.FR)
 
         with pytest.raises(UnsupportedTaxIdTypeError):
-            validator.validate("123-45-6789", TaxIdentifierType.SSN)
+            validator.validate(tax_id_factory(TaxIdentifierType.SSN), TaxIdentifierType.SSN)
 
 
 class TestGenericTaxRules:
@@ -41,20 +47,20 @@ class TestGenericTaxRules:
 
         assert rules.normalize("  fr-12 ab ", TaxIdentifierType.FOREIGN_TIN) == "FR-12 AB"
 
-    def test_is_valid_is_not_implemented(self) -> None:
+    def test_is_valid_is_not_implemented(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that validity cannot be determined without country-specific rules."""
 
         rules = GenericTaxRules(Country.FR)
 
         with pytest.raises(NotImplementedError):
-            rules.is_valid("FR1234567", TaxIdentifierType.FOREIGN_TIN)
+            rules.is_valid(tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN)
 
-    def test_resolves_no_metadata(self) -> None:
+    def test_resolves_no_metadata(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that generic rules resolve no country-specific metadata."""
 
         rules = GenericTaxRules(Country.FR)
 
-        assert rules.resolve_metadata("fr1234567", TaxIdentifierType.FOREIGN_TIN) is None
+        assert rules.resolve_metadata(tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN) is None
 
     def test_unknown_country_uses_generic_rules(self) -> None:
         """Test that the UNKNOWN country dispatches to generic rules."""
@@ -65,12 +71,12 @@ class TestGenericTaxRules:
 class TestUnknownCountryValidation:
     """Tests for the country-agnostic UNKNOWN validation behavior."""
 
-    def test_accepts_any_non_empty_identifier(self) -> None:
+    def test_accepts_any_non_empty_identifier(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that the unknown country accepts any non-empty identifier as valid."""
 
         rules = GenericTaxRules(Country.UNKNOWN)
 
-        assert rules.is_valid("FR1234567", TaxIdentifierType.FOREIGN_TIN) is True
+        assert rules.is_valid(tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN) is True
 
     def test_rejects_empty_identifier(self) -> None:
         """Test that the unknown country treats an empty identifier as invalid."""

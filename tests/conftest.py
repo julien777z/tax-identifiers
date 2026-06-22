@@ -25,6 +25,14 @@ class TaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
     tax_id: TaxIdField(country=Country.US, tax_id_type=TaxIdentifierType.SSN)
 
 
+class AllocatedSsn(BaseModel):
+    """A structurally valid SSN paired with the allocation metadata it resolves to."""
+
+    tax_id: str
+    issued_state: USState
+    issued_years: str
+
+
 @pytest.fixture
 def us_validator() -> TaxValidator:
     """Provide a US tax identifier validator."""
@@ -90,3 +98,18 @@ def ssn_allocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, SSNAllocationEn
     monkeypatch.setattr(us_metadata, "get_ssn_allocation_data", lambda: dataset)
 
     return dataset
+
+
+@pytest.fixture
+def allocated_ssn(ssn_allocation: dict[str, SSNAllocationEntry]) -> AllocatedSsn:
+    """Provide a structurally valid SSN for a known allocation entry with its expected state and years."""
+
+    area = next(iter(ssn_allocation))
+    entry = ssn_allocation[area]
+    group, years = next(iter(entry["groups"].items()))
+
+    return AllocatedSsn(
+        tax_id=f"{area}{group}0001",
+        issued_state=USState(entry["state"]),
+        issued_years=years,
+    )

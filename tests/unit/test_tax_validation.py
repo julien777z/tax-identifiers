@@ -3,6 +3,7 @@ from collections.abc import Callable
 import pytest
 
 from tax_identifiers import Country, TaxIdentifierType, TaxValidationResult
+from tests.conftest import AllocatedSsn
 
 
 class TestTaxValidationResultFromTaxIdentifier:
@@ -96,12 +97,31 @@ class TestTaxValidationResultFromTaxIdentifier:
         assert summary is not None
         assert "tax_id" not in summary.model_dump()
 
-    def test_raises_for_country_without_rules(self) -> None:
+    def test_raises_for_country_without_rules(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that summarizing a country without dedicated rules raises NotImplementedError."""
 
         with pytest.raises(NotImplementedError):
             TaxValidationResult.from_tax_identifier(
                 country=Country.FR,
-                tax_id="FR1234567",
+                tax_id=tax_id_factory(TaxIdentifierType.FOREIGN_TIN),
                 tax_id_type=TaxIdentifierType.FOREIGN_TIN,
             )
+
+    def test_metadata_survives_validation_round_trip(self, allocated_ssn: AllocatedSsn) -> None:
+        """Test that resolved metadata survives a dump/validate/dump cycle (FastAPI response_model behavior)."""
+
+        summary = TaxValidationResult.from_tax_identifier(
+            country=Country.US,
+            tax_id=allocated_ssn.tax_id,
+            tax_id_type=TaxIdentifierType.SSN,
+        )
+
+        assert summary is not None
+        dumped = summary.model_dump()
+
+        assert dumped["metadata"]["issued_state"] == allocated_ssn.issued_state
+        assert dumped["metadata"]["issued_years"] == allocated_ssn.issued_years
+
+        revalidated = TaxValidationResult.model_validate(dumped)
+
+        assert revalidated.model_dump()["metadata"] == dumped["metadata"]

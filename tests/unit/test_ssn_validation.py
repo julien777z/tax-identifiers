@@ -2,27 +2,22 @@ import json
 
 import pytest
 
-from tax_identifiers import SSNValidation, USState
+from tax_identifiers import SSNValidation
 from tax_identifiers.us.metadata import STATIC_DIR, SSNAllocationEntry, get_ssn_allocation_data
+from tests.conftest import AllocatedSsn
 
 
 class TestSSNValidationFromTaxIdentifier:
     """Tests for resolving SSN allocation details."""
 
-    def test_resolves_known_area_and_group(
-        self,
-        ssn_allocation: dict[str, SSNAllocationEntry],
-    ) -> None:
+    def test_resolves_known_area_and_group(self, allocated_ssn: AllocatedSsn) -> None:
         """Test that a known area and group resolve to issuing state and years."""
 
-        area, entry = next(iter(ssn_allocation.items()))
-        group, years = next(iter(entry["groups"].items()))
-
-        validation = SSNValidation.from_tax_identifier(f"{area}{group}0001")
+        validation = SSNValidation.from_tax_identifier(allocated_ssn.tax_id)
 
         assert validation is not None
-        assert validation.issued_state == USState(entry["state"])
-        assert validation.issued_years == years
+        assert validation.issued_state == allocated_ssn.issued_state
+        assert validation.issued_years == allocated_ssn.issued_years
 
     def test_unknown_area_resolves_without_state(
         self,
