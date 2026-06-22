@@ -101,20 +101,15 @@ def ssn_allocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, SSNAllocationEn
 
 
 @pytest.fixture
-def allocated_ssn_factory(
-    ssn_allocation: dict[str, SSNAllocationEntry],
-) -> Callable[..., AllocatedSsn]:
-    """Build a structurally valid SSN for a known allocation entry with its expected state and years."""
+def allocated_ssn(ssn_allocation: dict[str, SSNAllocationEntry]) -> AllocatedSsn:
+    """Provide a structurally valid SSN for a known allocation entry with its expected state and years."""
 
-    def _build(area: str | None = None, serial: str = "0001") -> AllocatedSsn:
-        resolved_area = area if area is not None else next(iter(ssn_allocation))
-        entry = ssn_allocation[resolved_area]
-        group, years = next(iter(entry["groups"].items()))
+    area = next(iter(ssn_allocation))
+    entry = ssn_allocation[area]
+    group, years = next(iter(entry["groups"].items()))
 
-        return AllocatedSsn(
-            tax_id=f"{resolved_area}{group}{serial}",
-            issued_state=USState(entry["state"]),
-            issued_years=years,
-        )
-
-    return _build
+    return AllocatedSsn(
+        tax_id=f"{area}{group}0001",
+        issued_state=USState(entry["state"]),
+        issued_years=years,
+    )

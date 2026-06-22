@@ -73,17 +73,13 @@ class TestUsTaxValidatorValidate:
 class TestUsTaxRulesResolveMetadata:
     """Tests for resolving SSN metadata through US rules."""
 
-    def test_resolves_known_ssn(
-        self,
-        allocated_ssn_factory: Callable[..., AllocatedSsn],
-    ) -> None:
+    def test_resolves_known_ssn(self, allocated_ssn: AllocatedSsn) -> None:
         """Test that a known SSN resolves to issuing details."""
 
-        allocated = allocated_ssn_factory()
-        metadata = UsTaxRules().resolve_metadata(allocated.tax_id, TaxIdentifierType.SSN)
+        metadata = UsTaxRules().resolve_metadata(allocated_ssn.tax_id, TaxIdentifierType.SSN)
 
         assert isinstance(metadata, SSNValidation)
-        assert metadata.issued_state == allocated.issued_state
+        assert metadata.issued_state == allocated_ssn.issued_state
 
     def test_returns_none_for_invalid_ssn(self) -> None:
         """Test that an SSN without nine digits resolves to None."""
