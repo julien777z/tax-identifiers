@@ -5,6 +5,7 @@ from tax_identifiers.us.fields import (
     TaxIdentifierTypeField,
     USStateField,
 )
+from tax_identifiers.us.matching import match_us_tin
 from tax_identifiers.us.metadata import SSNValidation
 from tax_identifiers.us.rules import UsTaxRules
 from tax_identifiers.us.tax_identifiers import (
@@ -33,6 +34,7 @@ __all__ = [
     "format_us_ein",
     "format_us_ssn",
     "is_us_tax_identifier_type",
+    "match_us_tin",
     "strict_format_us_ssn",
     "to_comparable_us_tax_identifier",
     "transform_tax_identifier",
