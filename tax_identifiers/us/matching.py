@@ -1,8 +1,10 @@
+from typing import Final
+
 from tax_identifiers.enums import TaxIdentifierType
 from tax_identifiers.exceptions import InvalidTaxIdError, UnsupportedTaxIdTypeError
 from tax_identifiers.us.tax_identifiers import clean_us_tax_identifier, is_us_tax_identifier_type
 
-TIN_MATCH_FAILURE_SENTINEL = "0000"
+TIN_MATCH_FAILURE_SENTINEL: Final[str] = "0000"
 
 
 async def match_us_tin(
