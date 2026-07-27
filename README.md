@@ -8,6 +8,23 @@ Country-aware tax identifier validation, normalization, and metadata resolution 
 pip install tax-identifiers
 ```
 
+## Typing
+
+Every field type this package exports is a plain `Annotated` alias, valid in annotation position and checked by pyright in CI. The package ships a PEP 561 `py.typed` marker, so type checkers read its inline annotations directly.
+
+The `TaxIdField(...)`, `NormalizedString(...)` and `StringBool(...)` factories were removed. They were called in annotation position — `tax_id: TaxIdField(country=Country.US)` — which no type checker accepts, because a call is not a valid type expression (pyright: `Call expression not allowed in type expression`). Assigning to a variable first does not help either; the checker then reports `Variable not allowed in type expression`. Configuration now lives in metadata objects inside `Annotated`, where calls *are* legal:
+
+| Removed | Replacement |
+|---------|-------------|
+| `TaxIdField(country=Country.US, tax_id_type=TaxIdentifierType.SSN)` | `SSNTaxIdField` |
+| `TaxIdField(country=Country.US)` | `USTaxIdField` |
+| `TaxIdField()` | `UnknownTaxIdField` |
+| `TaxIdField(..., allow_masked=True)` | the `Maskable`-prefixed alias |
+| `TaxIdField(country=Country.FR, ...)` | `Annotated[str, "tax_id", TaxIdFieldOptions(country=Country.FR, ...)]` |
+| `NormalizedString(normalize_to_uppercase=True)` | `UppercaseString` |
+| `NormalizedString(**options)` | `Annotated[str, NormalizedStringOptions(**options)]` |
+| `StringBool(predicate=is_yes)` | `Annotated[bool, StringBoolOptions(predicate=is_yes)]` |
+
 ## Quick Start
 
 Construct a `TaxValidator` for a country and validate an identifier — the validator normalizes the value, applies that country's structural rules, and resolves any metadata. Currently, only the US validators have dedicated validation rules; every other country falls back to generic normalization.
@@ -87,27 +104,46 @@ format_us_ein("123456789")                                # "12-3456789"
 ComparableUsTaxIdentifier("123-45-6789") == "123456789"   # True — equality ignores formatting
 ```
 
-`NormalizedString` and `StringBool` are configurable annotated field types:
+`UppercaseString`, `LowercaseString`, `TitlecaseString` and `DigitsOnlyString` are ready-made string field types:
 
 ```python
-from tax_identifiers import BaseModel, NormalizedString, StringBool
+from tax_identifiers import BaseModel, UppercaseString
+
+
+class IntakeForm(BaseModel):
+    business_name: UppercaseString
+
+
+IntakeForm(business_name="  acme llc ").business_name   # "ACME LLC"
+```
+
+For anything else, put `NormalizedStringOptions` or `StringBoolOptions` inside an `Annotated`:
+
+```python
+from typing import Annotated
+
+from tax_identifiers import BaseModel, NormalizedStringOptions, StringBoolOptions
 
 
 def is_yes(value: str) -> bool:
     return value.strip().upper() in {"YES", "Y"}
 
 
+BusinessName = Annotated[str, NormalizedStringOptions(normalize_to_uppercase=True)]
+Consent = Annotated[bool, StringBoolOptions(predicate=is_yes)]
+
+
 class IntakeForm(BaseModel):
-    business_name: NormalizedString(normalize_to_uppercase=True)
-    consented: StringBool(predicate=is_yes)
+    business_name: BusinessName
+    consented: Consent
 
 
-form = IntakeForm(business_name="  acme llc ", consented="yes")
+form = IntakeForm.model_validate({"business_name": "  acme llc ", "consented": "yes"})
 form.business_name   # "ACME LLC"
 form.consented       # True
 ```
 
-`NormalizedString` collapses internal and edge whitespace first, then applies any of:
+`NormalizedStringOptions` collapses internal and edge whitespace first, then applies any of:
 
 | Option | Effect |
 |--------|--------|
@@ -119,15 +155,15 @@ form.consented       # True
 
 ## Masking Tax Identifiers
 
-A `TaxIdField` carries a country and identifier type and normalizes on construction. Mix in `TaxIdentifierPairMixin` to mask the value while keeping the original recoverable:
+A tax ID field carries a country and identifier type and normalizes on construction. Mix in `TaxIdentifierPairMixin` to mask the value while keeping the original recoverable:
 
 ```python
-from tax_identifiers import BaseModel, Country, TaxIdentifierPairMixin, TaxIdentifierType, TaxIdField
+from tax_identifiers import BaseModel, SSNTaxIdField, TaxIdentifierPairMixin
 
 
 class ContractorTaxInfo(TaxIdentifierPairMixin, BaseModel):
     name: str
-    tax_id: TaxIdField(country=Country.US, tax_id_type=TaxIdentifierType.SSN)
+    tax_id: SSNTaxIdField
 
 
 record = ContractorTaxInfo(name="Jane Doe", tax_id="123-45-6789")
@@ -138,7 +174,34 @@ masked.tax_id                  # "*******6789"
 masked.to_unmask().tax_id      # "123-45-6789" — original recovered
 ```
 
-`TaxIdField` defaults to `Country.UNKNOWN` — a country-agnostic field that normalizes (uppercases) but is never validated. Pass `country=Country.US` to apply a country's rules.
+The shipped aliases, each with a `Maskable`-prefixed twin (`MaskableSSNTaxIdField`, …) that accepts already-masked input:
+
+| Alias | Country | Type |
+|-------|---------|------|
+| `SSNTaxIdField` | US | SSN |
+| `EINTaxIdField` | US | EIN |
+| `ITINTaxIdField` | US | ITIN |
+| `USTaxIdField` | US | unspecified |
+| `ForeignTaxIdField` | `UNKNOWN` | foreign TIN |
+| `UnknownTaxIdField` | `UNKNOWN` | unspecified |
+
+For any other combination, put `TaxIdFieldOptions` inside an `Annotated`:
+
+```python
+from typing import Annotated
+
+from tax_identifiers import Country, TaxIdentifierType, TaxIdFieldOptions
+
+FrenchTinField = Annotated[
+    str,
+    "tax_id",
+    TaxIdFieldOptions(country=Country.FR, tax_id_type=TaxIdentifierType.FOREIGN_TIN),
+]
+```
+
+`TaxIdFieldOptions` defaults to `Country.UNKNOWN` — a country-agnostic field that normalizes (uppercases) but is never validated. Pass `country=Country.US` to apply a country's rules.
+
+`SSNTaxIdField` is not the same as `SSNFormattedField`: the former normalizes through the country's rules into a `ComparableUsTaxIdentifier` and carries the metadata `TaxIdentifierPairMixin` needs; the latter only reformats to `XXX-XX-XXXX`.
 
 ## Run Tests
 
