@@ -21,6 +21,7 @@ dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "coverage>=7.15.0",
+    "pyright>=1.1.407",
 ]
 
 [tool.black]
@@ -30,6 +31,14 @@ target-version = ["py311", "py312", "py313", "py314"]
 [tool.isort]
 profile = "black"
 line_length = 110
+
+[tool.pyright]
+# tests/typing is the static-typing regression guard: every shipped field type used in
+# annotation position. The rest of tests/ passes deliberately-wrong input to assert
+# validation errors, which a checker cannot distinguish from a mistake.
+include = ["tax_identifiers", "tests/typing"]
+pythonVersion = "3.11"
+typeCheckingMode = "standard"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -43,6 +52,7 @@ packages = [
     {include = "scripts"},
 ]
 include = [
+    { path = "tax_identifiers/py.typed", format = ["sdist", "wheel"] },
     { path = "tax_identifiers/us/static/*.pkl", format = ["sdist", "wheel"] },
     { path = "tax_identifiers/us/static/*.json", format = ["sdist"] },
 ]
