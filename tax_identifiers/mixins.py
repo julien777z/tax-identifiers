@@ -1,4 +1,4 @@
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from pydantic import model_validator
 
@@ -8,9 +8,24 @@ from tax_identifiers.fields import TaxIdFieldOptions
 from tax_identifiers.masking import is_masked_tax_id, mask_tax_id
 from tax_identifiers.rules import get_country_rules
 
+if TYPE_CHECKING:
+    from pydantic_super_model import AnnotatedFieldInfo
+
 
 class TaxIdentifierPairMixin:
     """Normalize and mask tax identifier fields using tax-id annotation metadata."""
+
+    if TYPE_CHECKING:
+
+        def get_annotated_fields(self, *annotations: object) -> dict[str, "AnnotatedFieldInfo"]:
+            """Return matching annotated fields; supplied by the model this mixin is combined with."""
+
+            ...
+
+        def model_copy(self) -> Self:
+            """Return a copy of the model; supplied by the model this mixin is combined with."""
+
+            ...
 
     @model_validator(mode="after")
     def normalize_tax_identifier_fields_if_present(self) -> Self:

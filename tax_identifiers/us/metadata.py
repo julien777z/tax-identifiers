@@ -57,7 +57,7 @@ class SSNValidation(TaxIdentifierMetadata):
 
         issued_state, issued_years = cls.lookup_allocation(normalized)
 
-        return cls(issued_state=issued_state, issued_years=issued_years)
+        return cls.model_validate({"issued_state": issued_state, "issued_years": issued_years})
 
     @staticmethod
     def lookup_allocation(normalized: str) -> tuple[str | None, str | None]:

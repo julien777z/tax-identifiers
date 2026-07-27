@@ -297,4 +297,6 @@ class Country(BaseEnum):
         if not isinstance(value, str):
             return None
 
-        return cls._value2member_map_.get(normalize_country_code(value))
+        member = cls._value2member_map_.get(normalize_country_code(value))
+
+        return member if isinstance(member, cls) else None

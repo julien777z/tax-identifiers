@@ -26,3 +26,20 @@ jobs:
 
       - name: Test with Pytest
         run: poetry run pytest --cov=tax_identifiers --cov-report=term-missing
+
+  types:
+    name: Static Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
+        with:
+          python-version: "3.12"
+          post_setup_command: "poetry install --all-extras"
+
+      - name: Type check with Pyright
+        run: poetry run pyright
