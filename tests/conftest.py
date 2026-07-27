@@ -6,10 +6,10 @@ import pytest
 from tax_identifiers import (
     BaseModel,
     Country,
+    SSNTaxIdField,
     TaxIdentifier,
     TaxIdentifierPairMixin,
     TaxIdentifierType,
-    TaxIdField,
     TaxValidator,
     USState,
 )
@@ -22,7 +22,7 @@ FOREIGN_TAX_ID_PREFIX = "GB"
 class TaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
     """Test model exposing a single maskable US tax identifier field."""
 
-    tax_id: TaxIdField(country=Country.US, tax_id_type=TaxIdentifierType.SSN)
+    tax_id: SSNTaxIdField
 
 
 class AllocatedSsn(BaseModel):
