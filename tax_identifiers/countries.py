@@ -1,3 +1,5 @@
+from typing import cast
+
 import pycountry
 
 from tax_identifiers.enums import BaseEnum
@@ -297,6 +299,6 @@ class Country(BaseEnum):
         if not isinstance(value, str):
             return None
 
-        member = cls._value2member_map_.get(normalize_country_code(value))
-
-        return member if isinstance(member, cls) else None
+        return cast(
+            "Country | None", cls._value2member_map_.get(normalize_country_code(value))
+        )

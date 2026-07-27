@@ -4,8 +4,10 @@ from pathlib import Path
 from typing import Final, Self, TypedDict
 
 from tax_identifiers.metadata import TaxIdentifierMetadata
+from tax_identifiers.us.enums import USState
 from tax_identifiers.us.fields import USStateField
 from tax_identifiers.us.tax_identifiers import clean_us_tax_identifier
+from tax_identifiers.us.transformers import transform_us_state
 
 
 class SSNAllocationEntry(TypedDict):
@@ -57,10 +59,10 @@ class SSNValidation(TaxIdentifierMetadata):
 
         issued_state, issued_years = cls.lookup_allocation(normalized)
 
-        return cls.model_validate({"issued_state": issued_state, "issued_years": issued_years})
+        return cls(issued_state=issued_state, issued_years=issued_years)
 
     @staticmethod
-    def lookup_allocation(normalized: str) -> tuple[str | None, str | None]:
+    def lookup_allocation(normalized: str) -> tuple[USState | None, str | None]:
         """Look up issuing state and issued years from the SSN allocation dataset."""
 
         area_number = normalized[:3]
@@ -70,4 +72,4 @@ class SSNValidation(TaxIdentifierMetadata):
         if allocation is None:
             return None, None
 
-        return allocation["state"], allocation["groups"].get(group_number)
+        return transform_us_state(allocation["state"]), allocation["groups"].get(group_number)

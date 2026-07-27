@@ -9,6 +9,12 @@ alwaysApply: true
 
 - Never poll a PR with background `sleep` or timed self check-ins; act only on delivered PR activity webhooks.
 
+## Documentation
+
+- Document current behavior only. Never describe what a symbol used to do, what was removed, renamed, or deprecated, and never write migration tables or upgrade notes.
+- This project has a single known consumer, so there is no external audience for a deprecation path. Git history is the record of what changed; the README describes what exists now.
+- Docstring and comment conventions live in `python.md`.
+
 ## Version Bumps
 
 - Never edit `version` in `pyproject.toml`. CI owns it.

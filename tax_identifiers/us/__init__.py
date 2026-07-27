@@ -1,10 +1,5 @@
 from tax_identifiers.us.enums import USState
-from tax_identifiers.us.fields import (
-    EINFormattedField,
-    SSNFormattedField,
-    TaxIdentifierTypeField,
-    USStateField,
-)
+from tax_identifiers.us.fields import USStateField
 from tax_identifiers.us.matching import match_us_tin
 from tax_identifiers.us.metadata import SSNValidation
 from tax_identifiers.us.rules import UsTaxRules
@@ -24,9 +19,6 @@ __all__ = [
     "USState",
     "UsTaxRules",
     "SSNValidation",
-    "TaxIdentifierTypeField",
-    "EINFormattedField",
-    "SSNFormattedField",
     "USStateField",
     "US_TAX_IDENTIFIER_TYPES",
     "ComparableUsTaxIdentifier",
