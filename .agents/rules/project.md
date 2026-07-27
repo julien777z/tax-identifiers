@@ -13,7 +13,7 @@ alwaysApply: true
 
 - Document current behavior only. Never describe what a symbol used to do, what was removed, renamed, or deprecated, and never write migration tables or upgrade notes.
 - This project has a single known consumer, so there is no external audience for a deprecation path. Git history is the record of what changed; the README describes what exists now.
-- Docstring and comment conventions live in `python.md`.
+- The same applies to code comments and docstrings: no "formerly", "replaces", or "kept for backwards compatibility" notes.
 
 ## Version Bumps
 
