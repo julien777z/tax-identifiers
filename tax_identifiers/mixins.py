@@ -11,21 +11,26 @@ from tax_identifiers.rules import get_country_rules
 if TYPE_CHECKING:
     from pydantic_super_model import AnnotatedFieldInfo
 
+    from tax_identifiers.base import BaseModel as _MixinHost
+else:
+    _MixinHost = object
 
-class TaxIdentifierPairMixin:
+
+def matched_tax_id_options(field_info: "AnnotatedFieldInfo") -> TaxIdFieldOptions | None:
+    """Return the tax-id options carried by an annotated field, when present."""
+
+    return next(
+        (
+            metadata
+            for metadata in field_info.matched_metadata
+            if isinstance(metadata, TaxIdFieldOptions)
+        ),
+        None,
+    )
+
+
+class TaxIdentifierPairMixin(_MixinHost):
     """Normalize and mask tax identifier fields using tax-id annotation metadata."""
-
-    if TYPE_CHECKING:
-
-        def get_annotated_fields(self, *annotations: object) -> dict[str, "AnnotatedFieldInfo"]:
-            """Return matching annotated fields; supplied by the model this mixin is combined with."""
-
-            ...
-
-        def model_copy(self) -> Self:
-            """Return a copy of the model; supplied by the model this mixin is combined with."""
-
-            ...
 
     @model_validator(mode="after")
     def normalize_tax_identifier_fields_if_present(self) -> Self:
@@ -36,8 +41,8 @@ class TaxIdentifierPairMixin:
 
         tax_id_fields = self.get_annotated_fields(TaxIdFieldOptions)
 
-        for field_name in tax_id_fields:
-            options = self.tax_id_field_options(field_name)
+        for field_name, field_info in tax_id_fields.items():
+            options = matched_tax_id_options(field_info)
             if options is None:
                 continue
 
@@ -61,14 +66,7 @@ class TaxIdentifierPairMixin:
         if field_info is None:
             return None
 
-        return next(
-            (
-                metadata
-                for metadata in field_info.matched_metadata
-                if isinstance(metadata, TaxIdFieldOptions)
-            ),
-            None,
-        )
+        return matched_tax_id_options(field_info)
 
     @property
     def tax_identifier_country(self) -> Country | None:

@@ -33,12 +33,13 @@ profile = "black"
 line_length = 110
 
 [tool.pyright]
-# tests/typing is the static-typing regression guard: every shipped field type used in
-# annotation position. The rest of tests/ passes deliberately-wrong input to assert
-# validation errors, which a checker cannot distinguish from a mistake.
-include = ["tax_identifiers", "tests/typing"]
+include = ["tax_identifiers", "tests", "scripts"]
 pythonVersion = "3.11"
 typeCheckingMode = "standard"
+
+[[tool.pyright.executionEnvironments]]
+root = "tests/unit"
+reportArgumentType = "none"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
