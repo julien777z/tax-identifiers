@@ -22,7 +22,9 @@ pip install tax-identifiers
 Every field type this package exports is a plain `Annotated` alias, valid in annotation position:
 
 ```python
-from tax_identifiers import BaseModel, SSNTaxIdField
+from pydantic import BaseModel
+
+from tax_identifiers import SSNTaxIdField
 
 
 class Contractor(BaseModel):
@@ -99,8 +101,6 @@ summary.valid   # True
 
 ## Normalization Utilities
 
-Normalization helpers and annotated Pydantic field types:
-
 ```python
 from tax_identifiers import clean_us_tax_identifier, format_us_ssn, format_us_ein, ComparableUsTaxIdentifier
 
@@ -110,44 +110,17 @@ format_us_ein("123456789")                                # "12-3456789"
 ComparableUsTaxIdentifier("123-45-6789") == "123456789"   # True, equality ignores formatting
 ```
 
-`build_string_normalizer` builds a normalizer you can attach with pydantic's own `AfterValidator`:
-
-```python
-from typing import Annotated
-
-from pydantic import AfterValidator
-
-from tax_identifiers import BaseModel, build_string_normalizer
-
-BusinessName = Annotated[str, AfterValidator(build_string_normalizer(normalize_to_uppercase=True))]
-
-
-class IntakeForm(BaseModel):
-    business_name: BusinessName
-
-
-IntakeForm(business_name="  acme llc ").business_name   # "ACME LLC"
-```
-
-`build_string_normalizer` collapses internal and edge whitespace first, then applies any of:
-
-| Option | Effect |
-|--------|--------|
-| `normalize_to_uppercase` | Uppercase the value |
-| `normalize_to_lowercase` | Lowercase the value |
-| `normalize_to_titlecase` | Title-case the value |
-| `strip_non_digits` | Remove every non-digit character |
-| `strip_trailing_punctuation` | Drop trailing `.` and `,` from each token |
-
 ## Masking Tax Identifiers
 
-A tax ID field carries a country and identifier type and normalizes on construction. Mix in `TaxIdentifierPairMixin` to mask the value while keeping the original recoverable:
+A tax ID field carries a country and identifier type and normalizes on construction. `TaxIdentifierPairMixin` masks the value while keeping the original recoverable; it reads annotation metadata through `get_annotated_fields`, so it is mixed into a `SuperModelPydanticMixin` model:
 
 ```python
-from tax_identifiers import BaseModel, SSNTaxIdField, TaxIdentifierPairMixin
+from pydantic_super_model import SuperModelPydanticMixin
+
+from tax_identifiers import SSNTaxIdField, TaxIdentifierPairMixin
 
 
-class ContractorTaxInfo(TaxIdentifierPairMixin, BaseModel):
+class ContractorTaxInfo(TaxIdentifierPairMixin, SuperModelPydanticMixin):
     name: str
     tax_id: SSNTaxIdField
 
