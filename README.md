@@ -1,6 +1,15 @@
-# tax-identifiers
+# Tax Identifiers
 
 Country-aware tax identifier validation, normalization, and metadata resolution for Pydantic models.
+
+## Features
+
+- Validate US tax identifiers against SSN, EIN and ITIN structural rules, with generic normalization for every other country.
+- Resolve SSN allocation metadata: issuing state and issued years.
+- Annotated Pydantic field types that normalize a tax identifier on construction.
+- Masking and unmasking of tax identifier fields, with the original recoverable.
+- Country resolution from ISO codes, alpha-3 codes and full names.
+- Typed throughout, with a PEP 561 `py.typed` marker.
 
 ## Installation
 
@@ -20,7 +29,7 @@ class Contractor(BaseModel):
     tax_id: SSNTaxIdField
 ```
 
-Configuration lives in metadata objects inside `Annotated`, so a field type is always a name you can annotate with, never a call. The package ships a PEP 561 `py.typed` marker, and pyright checks the whole package plus its test suite in CI.
+Configuration lives in metadata objects inside `Annotated`, so a field type is always a name you can annotate with, never a call.
 
 ## Quick Start
 
@@ -39,7 +48,7 @@ result.metadata.issued_state   # a USState enum, e.g. USState.NEW_YORK ("NY")
 result.metadata.issued_years   # e.g. "1936-1950"
 ```
 
-`TaxValidationResult` omits the raw identifier, so it is safe to log or return from an API.
+`TaxValidationResult` omits the raw identifier.
 
 ## Resolving Countries
 
@@ -90,7 +99,7 @@ summary.valid   # True
 
 ## Normalization Utilities
 
-Reusable normalization helpers and annotated Pydantic field types you can drop into your own models:
+Normalization helpers and annotated Pydantic field types:
 
 ```python
 from tax_identifiers import clean_us_tax_identifier, format_us_ssn, format_us_ein, ComparableUsTaxIdentifier
@@ -144,7 +153,7 @@ class ContractorTaxInfo(TaxIdentifierPairMixin, BaseModel):
 
 
 record = ContractorTaxInfo(name="Jane Doe", tax_id="123-45-6789")
-record.tax_id == "123456789"   # normalized on construction, equality ignores formatting
+record.tax_id == "123456789"   # normalized on construction
 
 masked = record.to_masked()
 masked.tax_id                  # "*******6789"
@@ -178,9 +187,11 @@ FrenchTinField = Annotated[
 
 `TaxIdFieldOptions` defaults to `Country.UNKNOWN`, a country-agnostic field that normalizes (uppercases) but is never validated. Pass `country=Country.US` to apply a country's rules.
 
-## Run Tests
+## Local Development
 
 ```bash
-pip install -e ".[dev]"
-pytest -v
+poetry install --all-extras   # install
+poetry run pytest             # run the tests
+poetry run black .            # format
+poetry run pyright            # type check
 ```
