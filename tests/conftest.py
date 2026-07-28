@@ -5,22 +5,22 @@ from typing import Annotated, Final
 import pytest
 
 from tax_identifiers import (
-    BaseModel,
     Country,
     MaskableUSTaxIdField,
     SSNTaxIdField,
+    TaxIdFieldOptions,
+    TaxIdStr,
     TaxIdentifier,
     TaxIdentifierPairMixin,
     TaxIdentifierType,
-    TaxIdStr,
-    TaxIdFieldOptions,
     TaxValidator,
-    UnknownTaxIdField,
-    USState,
-    USStateField,
     USTaxIdField,
+    UnknownTaxIdField,
     mask_tax_id,
 )
+from tax_identifiers.base import BaseModel
+from tax_identifiers.us.enums import USState
+from tax_identifiers.us.fields import USStateField
 from tax_identifiers.us import metadata as us_metadata
 from tax_identifiers.us.metadata import SSNAllocationEntry
 

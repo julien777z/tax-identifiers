@@ -7,7 +7,7 @@ from tests.conftest import AllocatedSsn
 
 
 class TestTaxValidationResultFromTaxIdentifier:
-    """Tests for building a validation summary from a raw identifier."""
+    """Test that a validation summary is built from a raw identifier."""
 
     def test_summarizes_valid_ssn(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that a valid SSN produces a summary with resolved details."""

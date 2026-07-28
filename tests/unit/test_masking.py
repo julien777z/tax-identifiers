@@ -11,7 +11,7 @@ def expected_mask(display: str) -> str:
 
 
 class TestTaxIdentifierMasking:
-    """Tests for masking and unmasking tax identifier fields."""
+    """Test that tax identifier fields mask and unmask."""
 
     def test_normalizes_on_construction(
         self,
@@ -71,7 +71,7 @@ class TestTaxIdentifierMasking:
 
 
 class TestTaxIdentifierFieldMetadata:
-    """Tests for tax identifier annotation metadata accessors."""
+    """Test that annotation metadata is exposed from the model."""
 
     def test_exposes_country_and_type(
         self,

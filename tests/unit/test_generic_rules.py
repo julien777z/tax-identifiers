@@ -14,7 +14,7 @@ from tax_identifiers import (
 
 
 class TestGenericTaxValidation:
-    """Tests for tax identifiers of countries without dedicated rules."""
+    """Test that countries without dedicated rules fall back to generic handling."""
 
     def test_named_country_validation_is_not_implemented(
         self, tax_id_factory: Callable[..., str]
@@ -40,7 +40,7 @@ class TestGenericTaxValidation:
 
 
 class TestGenericTaxRules:
-    """Tests for the country-agnostic normalization and validity behavior."""
+    """Test that country-agnostic rules normalize and report validity."""
 
     def test_normalizes_to_uppercase(self) -> None:
         """Test that generic normalization collapses whitespace and uppercases."""
@@ -78,7 +78,7 @@ class TestGenericTaxRules:
 
 
 class TestUnknownCountryValidation:
-    """Tests for the country-agnostic UNKNOWN validation behavior."""
+    """Test that the UNKNOWN country accepts any non-empty identifier."""
 
     def test_accepts_any_non_empty_identifier(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that the unknown country accepts any non-empty identifier as valid."""

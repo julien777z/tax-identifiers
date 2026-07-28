@@ -6,17 +6,19 @@ from tax_identifiers import (
     TaxIdentifierOrigin,
     TaxIdentifierType,
     TinType,
+    format_us_ssn,
+)
+from tax_identifiers.normalization import (
     build_string_normalizer,
     collapse_whitespace,
     empty_str_to_none,
-    format_us_ssn,
     transform_required_string,
-    transform_tax_identifier,
 )
+from tax_identifiers.us.transformers import transform_tax_identifier
 
 
 class TestCollapseWhitespace:
-    """Tests for whitespace collapsing."""
+    """Test that whitespace is collapsed."""
 
     def test_collapses_internal_and_edge_whitespace(self) -> None:
         """Test that runs of whitespace collapse to single spaces and trim."""
@@ -25,7 +27,7 @@ class TestCollapseWhitespace:
 
 
 class TestTransformRequiredString:
-    """Tests for required-string normalization."""
+    """Test that required strings are normalized and empties rejected."""
 
     @pytest.mark.parametrize("value", [None, "", "   "], ids=["none", "empty", "whitespace"])
     def test_rejects_empty_values(self, value: str | None) -> None:
@@ -36,7 +38,7 @@ class TestTransformRequiredString:
 
 
 class TestBuildStringNormalizer:
-    """Tests for the composable string normalizer."""
+    """Test that the composable string normalizer applies its options."""
 
     @pytest.mark.parametrize(
         ("options", "value", "expected"),
@@ -68,7 +70,7 @@ class TestBuildStringNormalizer:
 
 
 class TestEmptyStrToNone:
-    """Tests for empty-string to None conversion."""
+    """Test that empty strings convert to None."""
 
     def test_converts_blank_strings(self) -> None:
         """Test that blank string values become None while others are preserved."""
@@ -87,7 +89,7 @@ class TestEmptyStrToNone:
 
 
 class TestTransformTaxIdentifier:
-    """Tests for origin-aware tax identifier normalization."""
+    """Test that tax identifier normalization respects the origin."""
 
     def test_cleans_us_identifier_to_digits(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that a US identifier normalizes to nine bare digits."""

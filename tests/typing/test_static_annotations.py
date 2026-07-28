@@ -3,22 +3,22 @@ from typing import Annotated, Final, assert_type
 
 import tax_identifiers
 from tax_identifiers import (
-    BaseModel,
     Country,
     ForeignTaxIdField,
     MaskableForeignTaxIdField,
-    MaskableUnknownTaxIdField,
     MaskableUSTaxIdField,
+    MaskableUnknownTaxIdField,
     SSNTaxIdField,
-    StrRequired,
-    TaxIdentifierType,
     TaxIdFieldOptions,
     TaxIdStr,
-    UnknownTaxIdField,
-    USState,
-    USStateField,
+    TaxIdentifierType,
     USTaxIdField,
+    UnknownTaxIdField,
 )
+from tax_identifiers.base import BaseModel
+from tax_identifiers.fields import StrRequired
+from tax_identifiers.us.enums import USState
+from tax_identifiers.us.fields import USStateField
 from tests.conftest import TaxIdentifierHolder
 
 COVERED_FIELD_TYPES: Final[frozenset[str]] = frozenset(
@@ -30,8 +30,6 @@ COVERED_FIELD_TYPES: Final[frozenset[str]] = frozenset(
         "MaskableUSTaxIdField",
         "MaskableForeignTaxIdField",
         "MaskableUnknownTaxIdField",
-        "USStateField",
-        "StrRequired",
         "TaxIdStr",
     }
 )
@@ -74,7 +72,7 @@ class CustomAnnotationHolder(BaseModel):
 
 
 class TestStaticAnnotations:
-    """Tests that every shipped field type is usable and correctly typed in annotation position."""
+    """Test that every shipped field type is usable and correctly typed in annotation position."""
 
     def test_aliases_resolve_to_their_underlying_types(
         self, tax_id_factory: Callable[..., str]

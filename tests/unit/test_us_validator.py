@@ -15,7 +15,7 @@ from tests.conftest import AllocatedSsn
 
 
 class TestUsTaxValidatorCountry:
-    """Tests for the validator's country identity."""
+    """Test that the validator reports its country."""
 
     def test_reports_united_states(self, us_validator: TaxValidator) -> None:
         """Test that the US validator reports the United States."""
@@ -24,7 +24,7 @@ class TestUsTaxValidatorCountry:
 
 
 class TestUsTaxValidatorValidate:
-    """Tests for validating US tax identifiers."""
+    """Test that US tax identifiers are validated."""
 
     def test_returns_resolution_for_valid_ssn(
         self,
@@ -71,7 +71,7 @@ class TestUsTaxValidatorValidate:
 
 
 class TestUsTaxRulesResolveMetadata:
-    """Tests for resolving SSN metadata through US rules."""
+    """Test that SSN metadata resolves through the US rules."""
 
     def test_resolves_known_ssn(self, allocated_ssn: AllocatedSsn) -> None:
         """Test that a known SSN resolves to issuing details."""

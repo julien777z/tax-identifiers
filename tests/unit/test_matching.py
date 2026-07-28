@@ -6,7 +6,7 @@ from tax_identifiers import TaxIdentifierType, match_us_tin
 
 
 class TestMatchUsTin:
-    """Tests for the US TIN match stub."""
+    """Test that US TIN matching reports it is not implemented."""
 
     @pytest.mark.parametrize(
         "tax_id_type",

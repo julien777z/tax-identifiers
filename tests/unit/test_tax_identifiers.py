@@ -10,12 +10,12 @@ from tax_identifiers import (
     format_us_ssn,
     is_us_tax_identifier_type,
     strict_format_us_ssn,
-    strip_non_digits,
 )
+from tax_identifiers.normalization import strip_non_digits
 
 
 class TestStripNonDigits:
-    """Tests for stripping non-digit characters."""
+    """Test that non-digit characters are stripped."""
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -33,7 +33,7 @@ class TestStripNonDigits:
 
 
 class TestCleanUsTaxIdentifier:
-    """Tests for normalizing a US tax identifier to nine digits."""
+    """Test that a US tax identifier normalizes to nine digits."""
 
     def test_normalizes_formatted_identifier_to_digits(
         self,
@@ -60,7 +60,7 @@ class TestCleanUsTaxIdentifier:
 
 
 class TestFormatUsSsn:
-    """Tests for progressive SSN formatting."""
+    """Test that SSNs are formatted progressively as digits are entered."""
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -89,7 +89,7 @@ class TestFormatUsSsn:
 
 
 class TestStrictFormatUsSsn:
-    """Tests for strict nine-digit SSN formatting."""
+    """Test that strict SSN formatting requires nine digits."""
 
     def test_formats_nine_digit_ssn(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that a nine-digit SSN is formatted with dashes."""
@@ -109,7 +109,7 @@ class TestStrictFormatUsSsn:
 
 
 class TestFormatUsEin:
-    """Tests for EIN formatting."""
+    """Test that EINs are formatted correctly."""
 
     def test_formats_nine_digit_ein(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that a nine-digit EIN is formatted as XX-XXXXXXX."""
@@ -120,7 +120,7 @@ class TestFormatUsEin:
 
 
 class TestComparableUsTaxIdentifier:
-    """Tests for formatting-insensitive tax identifier comparison."""
+    """Test that tax identifier comparison ignores formatting."""
 
     def test_equals_across_formatting(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that dashed and bare forms compare equal."""
@@ -147,7 +147,7 @@ class TestComparableUsTaxIdentifier:
 
 
 class TestIsUsTaxIdentifierType:
-    """Tests for classifying US tax identifier types."""
+    """Test that US tax identifier types are classified correctly."""
 
     @pytest.mark.parametrize(
         ("tax_id_type", "expected"),

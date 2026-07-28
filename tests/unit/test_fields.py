@@ -6,12 +6,12 @@ from pydantic import ValidationError
 from tax_identifiers import (
     ComparableUsTaxIdentifier,
     Country,
-    TaxIdentifierType,
     TaxIdFieldOptions,
-    USState,
+    TaxIdentifierType,
     format_us_ssn,
     is_masked_tax_id,
 )
+from tax_identifiers.us.enums import USState
 from tests.conftest import (
     InlineUsTaxIdHolder,
     MaskedTaxIdHolder,
@@ -22,7 +22,7 @@ from tests.conftest import (
 
 
 class TestUSStateField:
-    """Tests for US state coercion."""
+    """Test that US states coerce from codes and names."""
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -44,7 +44,7 @@ class TestUSStateField:
 
 
 class TestTaxIdField:
-    """Tests for the tax identifier field annotation."""
+    """Test that the tax identifier field annotation normalizes and rejects input."""
 
     def test_normalizes_us_identifier(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that a US identifier is stored as a formatting-insensitive value."""
@@ -83,7 +83,7 @@ class TestTaxIdField:
 
 
 class TestUnknownCountryTaxIdField:
-    """Tests for the country-agnostic (unknown) tax identifier field."""
+    """Test that the country-agnostic field normalizes without country rules."""
 
     def test_normalizes_generically(self, normalizable_foreign_tax_id: tuple[str, str]) -> None:
         """Test that an unknown-country field uppercases without US cleaning."""
@@ -95,7 +95,7 @@ class TestUnknownCountryTaxIdField:
 
 
 class TestInlineTaxIdFieldOptions:
-    """Tests for configuring a tax identifier field inline instead of through a shipped alias."""
+    """Test that a tax identifier field configured inline matches a shipped alias."""
 
     def test_matches_the_equivalent_alias(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that an inline annotation behaves identically to the matching alias."""
@@ -110,7 +110,7 @@ class TestInlineTaxIdFieldOptions:
 
 
 class TestTaxIdFieldOptions:
-    """Tests for the tax identifier annotation metadata defaults."""
+    """Test that annotation metadata defaults to the country-agnostic contract."""
 
     def test_defaults_to_the_country_agnostic_contract(self) -> None:
         """Test that options default to the unknown country without allowing masked input."""

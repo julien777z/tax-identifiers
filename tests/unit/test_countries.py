@@ -1,7 +1,11 @@
 import pytest
 from pydantic import ValidationError
 
-from tax_identifiers import BaseModel, Country, UnknownCountryError
+from tax_identifiers import (
+    Country,
+    UnknownCountryError,
+)
+from tax_identifiers.base import BaseModel
 
 
 class CountryHolder(BaseModel):
@@ -11,7 +15,7 @@ class CountryHolder(BaseModel):
 
 
 class TestCountryFromString:
-    """Tests for normalizing country strings to Country members."""
+    """Test that country strings normalize to Country members."""
 
     @pytest.mark.parametrize(
         "value",
@@ -62,7 +66,7 @@ class TestCountryFromString:
 
 
 class TestCountryFieldCoercion:
-    """Tests for coercing raw country strings on model fields."""
+    """Test that raw country strings coerce on model fields."""
 
     @pytest.mark.parametrize(
         ("value", "expected"),

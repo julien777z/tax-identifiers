@@ -12,7 +12,7 @@ from tax_identifiers import (
 
 
 class TestTaxIdentifierValid:
-    """Tests for the reserved-range validity check."""
+    """Test that reserved SSN ranges are reported invalid."""
 
     @pytest.mark.parametrize(
         "tax_id",
@@ -58,7 +58,7 @@ class TestTaxIdentifierValid:
 
 
 class TestTaxIdentifierMetadata:
-    """Tests for derived SSN metadata."""
+    """Test that SSN metadata is derived from an identifier."""
 
     def test_exposes_metadata_for_ssn(
         self,
@@ -82,7 +82,7 @@ class TestTaxIdentifierMetadata:
 
 
 class TestTaxIdentifierNormalization:
-    """Tests for tax identifier normalization on construction."""
+    """Test that a tax identifier is normalized on construction."""
 
     def test_us_identifier_is_comparable(
         self,
@@ -113,7 +113,7 @@ class TestTaxIdentifierNormalization:
 
 
 class TestTaxIdentifierEquality:
-    """Tests for equality and hashing semantics."""
+    """Test that equality and hashing compare on the normalized identifier."""
 
     def test_equals_matching_model_across_formatting(
         self,
