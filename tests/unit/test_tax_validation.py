@@ -108,7 +108,7 @@ class TestTaxValidationResultFromTaxIdentifier:
             )
 
     def test_metadata_survives_validation_round_trip(self, allocated_ssn: AllocatedSsn) -> None:
-        """Test that resolved metadata survives a dump/validate/dump cycle (FastAPI response_model behavior)."""
+        """Test that resolved metadata survives a dump/validate/dump cycle."""
 
         summary = TaxValidationResult.from_tax_identifier(
             country=Country.US,

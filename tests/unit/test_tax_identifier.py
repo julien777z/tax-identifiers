@@ -157,8 +157,12 @@ class TestTaxIdentifierEquality:
         """Test that the same digits under different types are not equal."""
 
         raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
-        ssn = TaxIdentifier(country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.SSN)
-        ein = TaxIdentifier(country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.EIN)
+        ssn = TaxIdentifier(
+            country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.SSN
+        )
+        ein = TaxIdentifier(
+            country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.EIN
+        )
 
         assert ssn != ein
 

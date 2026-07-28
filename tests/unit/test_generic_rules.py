@@ -19,12 +19,14 @@ class TestGenericTaxValidation:
     def test_named_country_validation_is_not_implemented(
         self, tax_id_factory: Callable[..., str]
     ) -> None:
-        """Test that validating a named country without dedicated rules raises NotImplementedError."""
+        """Test that a named country without dedicated rules raises NotImplementedError."""
 
         validator = TaxValidator(Country.from_string("France"))
 
         with pytest.raises(NotImplementedError):
-            validator.validate(tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN)
+            validator.validate(
+                tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
+            )
 
     def test_rejects_us_specific_type_for_generic_country(
         self, tax_id_factory: Callable[..., str]
@@ -53,14 +55,21 @@ class TestGenericTaxRules:
         rules = GenericTaxRules(Country.FR)
 
         with pytest.raises(NotImplementedError):
-            rules.is_valid(tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN)
+            rules.is_valid(
+                tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
+            )
 
     def test_resolves_no_metadata(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that generic rules resolve no country-specific metadata."""
 
         rules = GenericTaxRules(Country.FR)
 
-        assert rules.resolve_metadata(tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN) is None
+        assert (
+            rules.resolve_metadata(
+                tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
+            )
+            is None
+        )
 
     def test_unknown_country_uses_generic_rules(self) -> None:
         """Test that the UNKNOWN country dispatches to generic rules."""
@@ -76,7 +85,12 @@ class TestUnknownCountryValidation:
 
         rules = GenericTaxRules(Country.UNKNOWN)
 
-        assert rules.is_valid(tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN) is True
+        assert (
+            rules.is_valid(
+                tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
+            )
+            is True
+        )
 
     def test_rejects_empty_identifier(self) -> None:
         """Test that the unknown country treats an empty identifier as invalid."""

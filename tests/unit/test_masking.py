@@ -1,25 +1,13 @@
 from collections.abc import Callable
 
-from tax_identifiers import (
-    BaseModel,
-    Country,
-    TaxIdentifierPairMixin,
-    TaxIdentifierType,
-    format_us_ssn,
-)
-from tests.conftest import TaxIdentifierHolder
+from tax_identifiers import Country, TaxIdentifierType, format_us_ssn
+from tests.conftest import PlainHolder, TaxIdentifierHolder
 
 
 def expected_mask(display: str) -> str:
     """Return the masked form of a tax identifier display string."""
 
     return "*" * (len(display) - 4) + display[-4:]
-
-
-class PlainHolder(TaxIdentifierPairMixin, BaseModel):
-    """Test model with the mixin but no tax identifier fields."""
-
-    name: str
 
 
 class TestTaxIdentifierMasking:
@@ -72,10 +60,12 @@ class TestTaxIdentifierMasking:
         assert masked_twice.tax_id == expected_mask(display)
         assert masked_twice.to_unmask().tax_id == display
 
-    def test_masking_is_a_noop_without_tax_fields(self) -> None:
+    def test_masking_is_a_noop_without_tax_fields(
+        self, business_name_factory: Callable[..., str]
+    ) -> None:
         """Test that masking a model without tax identifier fields returns it unchanged."""
 
-        holder = PlainHolder(name="Acme")
+        holder = PlainHolder(name=business_name_factory())
 
         assert holder.to_masked() is holder
 

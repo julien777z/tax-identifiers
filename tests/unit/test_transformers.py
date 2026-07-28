@@ -94,7 +94,9 @@ class TestTransformTaxIdentifier:
 
         raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
 
-        result = transform_tax_identifier(format_us_ssn(raw_tax_id), origin=TaxIdentifierOrigin.US_TIN)
+        result = transform_tax_identifier(
+            format_us_ssn(raw_tax_id), origin=TaxIdentifierOrigin.US_TIN
+        )
 
         assert result == raw_tax_id
 

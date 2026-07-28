@@ -96,7 +96,10 @@ class TestStrictFormatUsSsn:
 
         raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
 
-        assert strict_format_us_ssn(raw_tax_id) == f"{raw_tax_id[:3]}-{raw_tax_id[3:5]}-{raw_tax_id[5:]}"
+        assert (
+            strict_format_us_ssn(raw_tax_id)
+            == f"{raw_tax_id[:3]}-{raw_tax_id[3:5]}-{raw_tax_id[5:]}"
+        )
 
     def test_rejects_partial_ssn(self) -> None:
         """Test that an SSN without nine digits raises an error."""
