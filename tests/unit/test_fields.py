@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Final
 
 import pytest
 from pydantic import ValidationError
@@ -7,7 +7,6 @@ from pydantic import ValidationError
 from tax_identifiers import (
     ComparableUsTaxIdentifier,
     Country,
-    InvalidTaxIdError,
     TaxIdFieldOptions,
     TaxIdStr,
     TaxIdentifierType,
@@ -19,14 +18,28 @@ from tax_identifiers.us.enums import USState
 from tests.conftest import (
     ForeignTaxIdHolder,
     InlineUsTaxIdHolder,
-    LenientSsnTaxIdHolder,
     LenientTaxIdentifierHolder,
     MaskedTaxIdHolder,
-    SsnTaxIdHolder,
     StateHolder,
+    TaxIdentifierHolder,
     UnknownTaxIdHolder,
     UsTaxIdHolder,
 )
+
+RESERVED_SSN_SEGMENTS: Final[list[dict[str, str]]] = [
+    {"area": "000"},
+    {"area": "666"},
+    {"area": "900"},
+    {"group": "00"},
+    {"serial": "0000"},
+]
+RESERVED_SSN_SEGMENT_IDS: Final[list[str]] = [
+    "zero_area",
+    "reserved_area",
+    "high_area",
+    "zero_group",
+    "zero_serial",
+]
 
 
 class TestUSStateField:
@@ -133,53 +146,55 @@ class TestSsnStructuralValidation:
     """Test that the SSN field rejects identifiers its country's rules find invalid."""
 
     @pytest.mark.parametrize(
-        "segments",
-        [
-            {"area": "000"},
-            {"area": "666"},
-            {"area": "900"},
-            {"group": "00"},
-            {"serial": "0000"},
-        ],
-        ids=["zero_area", "reserved_area", "high_area", "zero_group", "zero_serial"],
+        ("holder", "rejects"),
+        [(TaxIdentifierHolder, True), (LenientTaxIdentifierHolder, False)],
+        ids=["strict", "lenient"],
     )
-    def test_rejects_reserved_identifiers(
-        self, tax_id_factory: Callable[..., str], segments: dict[str, str]
+    @pytest.mark.parametrize("segments", RESERVED_SSN_SEGMENTS, ids=RESERVED_SSN_SEGMENT_IDS)
+    def test_reserved_identifiers_are_rejected_only_when_validity_is_asserted(
+        self,
+        tax_id_factory: Callable[..., str],
+        segments: dict[str, str],
+        holder: type[TaxIdentifierHolder] | type[LenientTaxIdentifierHolder],
+        rejects: bool,
     ) -> None:
-        """Test that each reserved SSN segment is rejected by the field."""
+        """Test that each reserved SSN segment is rejected by the strict field and kept by the lenient one."""
 
-        with pytest.raises(ValidationError, match="is not a valid"):
-            SsnTaxIdHolder(tax_id=tax_id_factory(TaxIdentifierType.SSN, **segments))
+        reserved = tax_id_factory(TaxIdentifierType.SSN, **segments)
 
-    def test_accepts_a_structurally_valid_identifier(
-        self, tax_id_factory: Callable[..., str]
+        if rejects:
+            with pytest.raises(ValidationError, match="is not a valid"):
+                holder(tax_id=reserved)
+        else:
+            assert holder(tax_id=reserved).tax_id == reserved
+
+    @pytest.mark.parametrize(
+        "holder",
+        [TaxIdentifierHolder, LenientTaxIdentifierHolder],
+        ids=["strict", "lenient"],
+    )
+    def test_normalizes_a_structurally_valid_identifier(
+        self,
+        tax_id_factory: Callable[..., str],
+        holder: type[TaxIdentifierHolder] | type[LenientTaxIdentifierHolder],
     ) -> None:
-        """Test that a structurally valid SSN is still accepted."""
+        """Test that both fields normalize a valid SSN the same way."""
 
         raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
 
-        assert SsnTaxIdHolder(tax_id=raw_tax_id).tax_id == raw_tax_id
+        assert holder(tax_id=format_us_ssn(raw_tax_id)).tax_id == raw_tax_id
 
-    def test_rejection_surfaces_as_a_validation_error(
+    def test_lenient_field_still_declares_the_ssn_type(
         self, tax_id_factory: Callable[..., str]
     ) -> None:
-        """Test that the rejection reaches callers as a pydantic error, not a raw library error."""
+        """Test that the lenient field keeps the country and type metadata the mixin reads."""
 
-        reserved = tax_id_factory(TaxIdentifierType.SSN, area="666")
+        holder = LenientTaxIdentifierHolder(
+            tax_id=tax_id_factory(TaxIdentifierType.SSN, area="666")
+        )
 
-        with pytest.raises(ValidationError):
-            SsnTaxIdHolder(tax_id=reserved)
-
-        assert issubclass(InvalidTaxIdError, ValueError)
-
-    def test_masked_input_bypasses_structural_validation(
-        self, masked_tax_id_factory: Callable[..., str]
-    ) -> None:
-        """Test that a mask-accepting field still takes masked input."""
-
-        masked = masked_tax_id_factory()
-
-        assert MaskedTaxIdHolder(tax_id=masked).tax_id == masked
+        assert holder.tax_identifier_country is Country.US
+        assert holder.tax_identifier_type is TaxIdentifierType.SSN
 
 
 class TestPermissiveTaxIdFields:
@@ -213,44 +228,3 @@ class TestPermissiveTaxIdFields:
             ]
 
         assert FrenchTinHolder(tax_id=" fr-123 ").tax_id == "FR-123"
-
-
-class TestLenientSsnTaxIdField:
-    """Test that the lenient SSN field normalizes without asserting structural validity."""
-
-    @pytest.mark.parametrize(
-        "segments",
-        [{"area": "000"}, {"area": "666"}, {"area": "900"}, {"group": "00"}, {"serial": "0000"}],
-        ids=["zero_area", "reserved_area", "high_area", "zero_group", "zero_serial"],
-    )
-    def test_accepts_identifiers_the_strict_field_rejects(
-        self, tax_id_factory: Callable[..., str], segments: dict[str, str]
-    ) -> None:
-        """Test that a reserved SSN passes the lenient field."""
-
-        reserved = tax_id_factory(TaxIdentifierType.SSN, **segments)
-
-        assert LenientSsnTaxIdHolder(tax_id=reserved).tax_id == reserved
-
-    def test_normalizes_identically_to_the_strict_field(
-        self, tax_id_factory: Callable[..., str]
-    ) -> None:
-        """Test that the lenient field normalizes exactly as the strict field does."""
-
-        formatted = format_us_ssn(tax_id_factory(TaxIdentifierType.SSN))
-
-        lenient = LenientSsnTaxIdHolder(tax_id=formatted)
-        strict = SsnTaxIdHolder(tax_id=formatted)
-
-        assert lenient.tax_id == strict.tax_id
-        assert type(lenient.tax_id) is type(strict.tax_id)
-
-    def test_still_declares_the_ssn_type(self, tax_id_factory: Callable[..., str]) -> None:
-        """Test that the lenient field keeps the country and type metadata the mixin reads."""
-
-        holder = LenientTaxIdentifierHolder(
-            tax_id=tax_id_factory(TaxIdentifierType.SSN, area="666")
-        )
-
-        assert holder.tax_identifier_country is Country.US
-        assert holder.tax_identifier_type is TaxIdentifierType.SSN

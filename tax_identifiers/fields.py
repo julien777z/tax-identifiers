@@ -1,4 +1,4 @@
-from typing import Annotated, Final, TypeAlias
+from typing import Annotated, TypeAlias
 
 from pydantic import BeforeValidator
 
@@ -11,39 +11,29 @@ StrRequired: TypeAlias = Annotated[str, "str_required", BeforeValidator(transfor
 
 TaxIdStr: TypeAlias = Annotated[str, "tax_id"]
 
-SSN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
-    country=Country.US, tax_id_type=TaxIdentifierType.SSN
-)
-US_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(country=Country.US)
-FOREIGN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
-    tax_id_type=TaxIdentifierType.FOREIGN_TIN
-)
-UNKNOWN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions()
+SSNTaxIdField: TypeAlias = Annotated[
+    TaxIdStr, TaxIdFieldOptions(country=Country.US, tax_id_type=TaxIdentifierType.SSN)
+]
 
-LENIENT_SSN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
-    country=Country.US, tax_id_type=TaxIdentifierType.SSN, assert_validity=False
-)
+LenientSSNTaxIdField: TypeAlias = Annotated[
+    TaxIdStr,
+    TaxIdFieldOptions(country=Country.US, tax_id_type=TaxIdentifierType.SSN, assert_validity=False),
+]
 
-MASKABLE_US_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
-    country=Country.US, allow_masked=True
-)
-MASKABLE_FOREIGN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
-    tax_id_type=TaxIdentifierType.FOREIGN_TIN, allow_masked=True
-)
-MASKABLE_UNKNOWN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(allow_masked=True)
+USTaxIdField: TypeAlias = Annotated[TaxIdStr, TaxIdFieldOptions(country=Country.US)]
 
-SSNTaxIdField: TypeAlias = Annotated[TaxIdStr, SSN_OPTIONS]
+ForeignTaxIdField: TypeAlias = Annotated[
+    TaxIdStr, TaxIdFieldOptions(tax_id_type=TaxIdentifierType.FOREIGN_TIN)
+]
 
-LenientSSNTaxIdField: TypeAlias = Annotated[TaxIdStr, LENIENT_SSN_OPTIONS]
+UnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, TaxIdFieldOptions()]
 
-USTaxIdField: TypeAlias = Annotated[TaxIdStr, US_OPTIONS]
+MaskableUSTaxIdField: TypeAlias = Annotated[
+    TaxIdStr, TaxIdFieldOptions(country=Country.US, allow_masked=True)
+]
 
-ForeignTaxIdField: TypeAlias = Annotated[TaxIdStr, FOREIGN_OPTIONS]
+MaskableForeignTaxIdField: TypeAlias = Annotated[
+    TaxIdStr, TaxIdFieldOptions(tax_id_type=TaxIdentifierType.FOREIGN_TIN, allow_masked=True)
+]
 
-UnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, UNKNOWN_OPTIONS]
-
-MaskableUSTaxIdField: TypeAlias = Annotated[TaxIdStr, MASKABLE_US_OPTIONS]
-
-MaskableForeignTaxIdField: TypeAlias = Annotated[TaxIdStr, MASKABLE_FOREIGN_OPTIONS]
-
-MaskableUnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, MASKABLE_UNKNOWN_OPTIONS]
+MaskableUnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, TaxIdFieldOptions(allow_masked=True)]

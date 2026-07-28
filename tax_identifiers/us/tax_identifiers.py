@@ -123,12 +123,3 @@ class ComparableUsTaxIdentifier(str):
         normalized = self._normalized_tax_identifier
 
         return hash(normalized if normalized is not None else str(self))
-
-
-def to_comparable_us_tax_identifier(value: str | None) -> ComparableUsTaxIdentifier | None:
-    """Wrap a US tax identifier for normalized comparison."""
-
-    if value is None:
-        return None
-
-    return ComparableUsTaxIdentifier(value)

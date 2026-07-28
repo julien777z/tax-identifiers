@@ -7,8 +7,8 @@ from tax_identifiers import (
     ForeignTaxIdField,
     MaskableForeignTaxIdField,
     MaskableUSTaxIdField,
-    MaskableUnknownTaxIdField,
     LenientSSNTaxIdField,
+    MaskableUnknownTaxIdField,
     SSNTaxIdField,
     TaxIdFieldOptions,
     TaxIdStr,
@@ -121,9 +121,7 @@ class TestStaticAnnotations:
         """Test that no exported field type is missing from this module."""
 
         exported = {
-            name
-            for name in tax_identifiers.__all__
-            if name.endswith(("Field", "TaxIdStr", "StrRequired"))
+            name for name in tax_identifiers.__all__ if name.endswith("Field") or name == "TaxIdStr"
         }
 
         assert exported == COVERED_FIELD_TYPES

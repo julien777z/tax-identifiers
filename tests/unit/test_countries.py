@@ -5,13 +5,7 @@ from tax_identifiers import (
     Country,
     UnknownCountryError,
 )
-from tax_identifiers.base import BaseModel
-
-
-class CountryHolder(BaseModel):
-    """Test model with a single country field."""
-
-    country: Country
+from tests.conftest import CountryHolder
 
 
 class TestCountryFromString:

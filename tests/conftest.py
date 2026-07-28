@@ -5,9 +5,9 @@ from typing import Annotated, Final
 import pytest
 
 from tax_identifiers import (
+    Country,
     ForeignTaxIdField,
     LenientSSNTaxIdField,
-    Country,
     MaskableUSTaxIdField,
     SSNTaxIdField,
     TaxIdFieldOptions,
@@ -21,9 +21,9 @@ from tax_identifiers import (
     mask_tax_id,
 )
 from tax_identifiers.base import BaseModel
+from tax_identifiers.us import metadata as us_metadata
 from tax_identifiers.us.enums import USState
 from tax_identifiers.us.fields import USStateField
-from tax_identifiers.us import metadata as us_metadata
 from tax_identifiers.us.metadata import SSNAllocationEntry
 
 FOREIGN_TAX_ID_PREFIX: Final[str] = "GB"
@@ -32,7 +32,7 @@ FAMILY_NAMES: Final[tuple[str, ...]] = ("Alderton", "Brightwell", "Calloway", "D
 
 
 class TaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
-    """Test model exposing a single maskable US tax identifier field."""
+    """Test model pairing the masking mixin with an SSN field."""
 
     tax_id: SSNTaxIdField
 
@@ -65,18 +65,6 @@ class MaskedTaxIdHolder(BaseModel):
     """Test model accepting a masked US tax identifier."""
 
     tax_id: MaskableUSTaxIdField
-
-
-class SsnTaxIdHolder(BaseModel):
-    """Test model with an SSN-typed tax identifier field."""
-
-    tax_id: SSNTaxIdField
-
-
-class LenientSsnTaxIdHolder(BaseModel):
-    """Test model with an SSN-typed field that does not assert structural validity."""
-
-    tax_id: LenientSSNTaxIdField
 
 
 class ForeignTaxIdHolder(BaseModel):
@@ -157,10 +145,8 @@ def masked_tax_id_factory(tax_id_factory: Callable[..., str]) -> Callable[..., s
 def full_name_factory() -> Callable[..., str]:
     """Build person names for tests that need one."""
 
-    def _build(*, lowercase: bool = False) -> str:
-        name = f"{random.choice(GIVEN_NAMES)} {random.choice(FAMILY_NAMES)}"
-
-        return name.lower() if lowercase else name
+    def _build() -> str:
+        return f"{random.choice(GIVEN_NAMES)} {random.choice(FAMILY_NAMES)}"
 
     return _build
 
@@ -182,21 +168,6 @@ def normalizable_foreign_tax_id() -> tuple[str, str]:
     raw = f" {FOREIGN_TAX_ID_PREFIX.lower()}-12 ab "
 
     return raw, raw.strip().upper()
-
-
-@pytest.fixture
-def unallocated_ssn(
-    ssn_allocation: dict[str, SSNAllocationEntry], tax_id_factory: Callable[..., str]
-) -> str:
-    """Provide a structurally valid SSN whose area is absent from the allocation dataset."""
-
-    area = next(
-        f"{candidate:03d}"
-        for candidate in range(1, 900)
-        if f"{candidate:03d}" not in ssn_allocation
-    )
-
-    return tax_id_factory(TaxIdentifierType.SSN, area=area)
 
 
 @pytest.fixture

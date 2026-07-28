@@ -3,7 +3,7 @@ from pydantic_core import core_schema
 
 from tax_identifiers.countries import Country
 from tax_identifiers.enums import TaxIdentifierType
-from tax_identifiers.exceptions import InvalidTaxIdError
+from tax_identifiers.exceptions import INVALID_TAX_ID_MESSAGE, InvalidTaxIdError
 from tax_identifiers.masking import (
     MASK_REJECTION_MESSAGE,
     MaskableTaxId,
@@ -56,7 +56,7 @@ class TaxIdFieldOptions:
             and not rules.is_valid(normalized, self.tax_id_type)
         ):
             raise InvalidTaxIdError(
-                f"{self.tax_id_type} value is not a valid {self.country} tax identifier"
+                INVALID_TAX_ID_MESSAGE.format(tax_id_type=self.tax_id_type, country=self.country)
             )
 
         return normalized
