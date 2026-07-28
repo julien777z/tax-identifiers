@@ -101,9 +101,8 @@ class ComparableUsTaxIdentifier(str):
             return other is None
 
         if isinstance(other, ComparableUsTaxIdentifier):
-            return (
-                other._normalized_tax_identifier is not None
-                and str.__eq__(self._normalized_tax_identifier, other._normalized_tax_identifier)
+            return other._normalized_tax_identifier is not None and str.__eq__(
+                self._normalized_tax_identifier, other._normalized_tax_identifier
             )
 
         if isinstance(other, (str, int)):
@@ -112,9 +111,8 @@ class ComparableUsTaxIdentifier(str):
             except ValueError:
                 return False
 
-            return (
-                other_normalized is not None
-                and str.__eq__(self._normalized_tax_identifier, other_normalized)
+            return other_normalized is not None and str.__eq__(
+                self._normalized_tax_identifier, other_normalized
             )
 
         return False

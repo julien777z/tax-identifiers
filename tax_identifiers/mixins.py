@@ -1,22 +1,21 @@
 from typing import TYPE_CHECKING, Self
 
 from pydantic import model_validator
+from pydantic_super_model import AnnotatedFieldInfo, SuperModelPydanticMixin
 
 from tax_identifiers.countries import Country
 from tax_identifiers.enums import TaxIdentifierType
-from tax_identifiers.fields import TaxIdFieldOptions
+from tax_identifiers.annotations import TaxIdFieldOptions
 from tax_identifiers.masking import is_masked_tax_id, mask_tax_id
 from tax_identifiers.rules import get_country_rules
 
 if TYPE_CHECKING:
-    from pydantic_super_model import AnnotatedFieldInfo
-
-    from tax_identifiers.base import BaseModel as _MixinHost
+    MixinHost = SuperModelPydanticMixin
 else:
-    _MixinHost = object
+    MixinHost = object
 
 
-def matched_tax_id_options(field_info: "AnnotatedFieldInfo") -> TaxIdFieldOptions | None:
+def matched_tax_id_options(field_info: AnnotatedFieldInfo) -> TaxIdFieldOptions | None:
     """Return the tax-id options carried by an annotated field, when present."""
 
     return next(
@@ -29,7 +28,7 @@ def matched_tax_id_options(field_info: "AnnotatedFieldInfo") -> TaxIdFieldOption
     )
 
 
-class TaxIdentifierPairMixin(_MixinHost):
+class TaxIdentifierPairMixin(MixinHost):
     """Normalize and mask tax identifier fields using tax-id annotation metadata."""
 
     @model_validator(mode="after")

@@ -1,5 +1,3 @@
-from typing import cast
-
 import pycountry
 
 from tax_identifiers.enums import BaseEnum
@@ -7,7 +5,7 @@ from tax_identifiers.exceptions import UnknownCountryError
 from tax_identifiers.normalization import collapse_whitespace
 
 
-def normalize_country_code(value: str) -> str:
+def normalize_country_code(value: object) -> str:
     """Normalize a country code or name to a Country member's alpha-2 code."""
 
     if not isinstance(value, str):
@@ -299,6 +297,4 @@ class Country(BaseEnum):
         if not isinstance(value, str):
             return None
 
-        return cast(
-            "Country | None", cls._value2member_map_.get(normalize_country_code(value))
-        )
+        return cls.__members__.get(normalize_country_code(value))

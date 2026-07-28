@@ -1,3 +1,5 @@
+from typing import cast
+
 from pydantic import ConfigDict, model_validator
 from pydantic_super_model import SuperModelPydanticMixin
 
@@ -19,6 +21,6 @@ class BaseModel(SuperModelPydanticMixin):
         """Convert empty-string inputs to None before field validation."""
 
         if isinstance(data, dict):
-            return empty_str_to_none(data)
+            return empty_str_to_none(cast("dict[str, object]", data))
 
         return data

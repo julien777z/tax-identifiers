@@ -2,13 +2,16 @@ import json
 import logging
 import pickle
 from pathlib import Path
+from typing import Final
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-STATIC_DIR = Path(__file__).resolve().parent.parent / "tax_identifiers" / "us" / "static"
-JSON_FILE = STATIC_DIR / "ssn_allocation.json"
-PICKLE_FILE = STATIC_DIR / "ssn_allocation.pkl"
+STATIC_DIR: Final[Path] = (
+    Path(__file__).resolve().parent.parent / "tax_identifiers" / "us" / "static"
+)
+JSON_FILE: Final[Path] = STATIC_DIR / "ssn_allocation.json"
+PICKLE_FILE: Final[Path] = STATIC_DIR / "ssn_allocation.pkl"
 
 
 def main() -> None:

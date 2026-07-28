@@ -5,6 +5,8 @@ class BaseEnum(str, Enum):
     """String-valued enum base class."""
 
     def __str__(self) -> str:
+        """Return the enum's string value."""
+
         return self.value
 
 

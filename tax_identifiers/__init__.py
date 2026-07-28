@@ -1,3 +1,4 @@
+from tax_identifiers.annotations import TaxIdFieldOptions
 from tax_identifiers.base import BaseModel
 from tax_identifiers.countries import Country, normalize_country_code
 from tax_identifiers.enums import (
@@ -19,7 +20,6 @@ from tax_identifiers.fields import (
     MaskableUSTaxIdField,
     SSNTaxIdField,
     StrRequired,
-    TaxIdFieldOptions,
     TaxIdStr,
     UnknownTaxIdField,
     USTaxIdField,

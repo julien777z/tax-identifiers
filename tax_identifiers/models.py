@@ -79,14 +79,14 @@ class TaxValidationResult(BaseModel):
         tax_id: str | None,
         tax_id_type: TaxIdentifierType | None,
     ) -> Self | None:
-        """Build a validation summary, or None for missing or malformed input; raises NotImplementedError for countries without dedicated rules."""
+        """Build a validation summary, or None when the input is missing or malformed."""
 
         if tax_id is None or tax_id_type is None:
             return None
 
         try:
             identifier = TaxIdentifier(country=country, tax_id=tax_id, tax_id_type=tax_id_type)
-        except (ValidationError, ValueError):
+        except ValidationError:
             return None
 
         return cls(

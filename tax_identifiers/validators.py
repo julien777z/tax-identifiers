@@ -32,6 +32,8 @@ class TaxValidator:
         )
 
         if result is None:
-            raise InvalidTaxIdError(f"{tax_id_type} value is not a valid {self.country} tax identifier")
+            raise InvalidTaxIdError(
+                f"{tax_id_type} value is not a valid {self.country} tax identifier"
+            )
 
         return result

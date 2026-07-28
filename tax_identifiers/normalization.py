@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import Final
 
 NON_DIGIT_PATTERN: Final[re.Pattern[str]] = re.compile(r"\D+")
+WHITESPACE_PATTERN: Final[re.Pattern[str]] = re.compile(r"\s+")
 
 
 def strip_non_digits(value: str) -> str:
@@ -14,7 +15,7 @@ def strip_non_digits(value: str) -> str:
 def collapse_whitespace(value: str) -> str:
     """Collapse consecutive whitespace and trim leading and trailing whitespace."""
 
-    return re.sub(r"\s+", " ", value).strip()
+    return WHITESPACE_PATTERN.sub(" ", value).strip()
 
 
 def empty_str_to_none(data: dict[str, object]) -> dict[str, object]:

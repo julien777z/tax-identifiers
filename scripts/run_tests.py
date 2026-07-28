@@ -1,7 +1,7 @@
 import subprocess
 
 
-def main():
+def main() -> None:
     """Run the tests."""
 
     subprocess.run(["poetry", "run", "pytest"], check=True)
