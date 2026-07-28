@@ -10,7 +10,7 @@ alwaysApply: true
 - If the source has `core/`, `models/`, `routes/`, or `services/`, keep the corresponding `unit/` and `integration/` folders aligned with those boundaries.
 - Place tests next to the source subdomain they verify, not in a loosely related folder.
 
-- Use pytest tests. Use async tests only for genuinely asynchronous behavior and mark them with `@pytest.mark.asyncio`.
+- Use pytest async tests (`async def test_...`).
 - Group tests in classes named `TestXxx`.
 - Use fixtures for setup (defined in `conftest.py` or fixture modules).
 - Register custom pytest markers in `pyproject.toml` under `[tool.pytest.ini_options].markers` instead of adding them dynamically in `pytest_configure(...)` inside `conftest.py`.
