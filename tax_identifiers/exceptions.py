@@ -1,4 +1,4 @@
-class TaxValidationError(Exception):
+class TaxValidationError(ValueError):
     """Base error for tax identifier validation failures."""
 
 
@@ -10,5 +10,5 @@ class UnsupportedTaxIdTypeError(TaxValidationError):
     """Raised when a validator receives a tax identifier type it does not handle."""
 
 
-class UnknownCountryError(TaxValidationError, ValueError):
+class UnknownCountryError(TaxValidationError):
     """Raised when a country string cannot be resolved to a known country."""

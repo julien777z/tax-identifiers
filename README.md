@@ -6,7 +6,7 @@ Country-aware tax identifier validation, normalization, and metadata resolution 
 
 - Validate US tax identifiers against SSN, EIN and ITIN structural rules, with generic normalization for every other country.
 - Resolve SSN allocation metadata: issuing state and issued years.
-- Annotated Pydantic field types that normalize a tax identifier on construction.
+- Annotated Pydantic field types that normalize a tax identifier on construction and reject one its country's rules find invalid.
 - Masking and unmasking of tax identifier fields, with the original recoverable.
 - Country resolution from ISO codes, alpha-3 codes and full names.
 - Typed throughout, with a PEP 561 `py.typed` marker.
@@ -133,7 +133,9 @@ masked.tax_id                  # "*******6789"
 masked.to_unmask().tax_id      # "123-45-6789", original recovered
 ```
 
-The shipped aliases. A `Maskable` name accepts a value that is already masked, such as `"*****6789"` read back from storage; the others reject one.
+A field rejects a value its country's rules find structurally invalid, raising `InvalidTaxIdError`. Because that subclasses `ValueError`, pydantic reports it as a `ValidationError` like any other field failure. Only countries with dedicated rules assert validity, so today that means `SSNTaxIdField` rejects reserved SSN ranges and the other aliases accept whatever normalizes.
+
+The shipped aliases. A `Maskable` name accepts a value that is already masked, such as `"*****6789"` read back from storage; the others reject one. Masked values skip the validity check.
 
 | Alias | Country | Type | Accepts masked input |
 |-------|---------|------|----------------------|

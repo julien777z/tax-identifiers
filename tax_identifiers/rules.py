@@ -19,6 +19,12 @@ class CountryTaxRules(ABC):
     def supported_types(self) -> frozenset[TaxIdentifierType]:
         """Return the tax identifier types these rules validate."""
 
+    @property
+    def can_assert_validity(self) -> bool:
+        """Return whether these rules can decide structural validity."""
+
+        return True
+
     @abstractmethod
     def normalize(self, tax_id: str, tax_id_type: TaxIdentifierType) -> str:
         """Return the canonical, comparison-ready form of a tax identifier."""

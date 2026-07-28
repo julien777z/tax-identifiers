@@ -31,6 +31,12 @@ class GenericTaxRules(CountryTaxRules):
 
         return GENERIC_SUPPORTED_TYPES
 
+    @property
+    def can_assert_validity(self) -> bool:
+        """Return whether these rules can decide validity, which only the unknown country can."""
+
+        return self._country is Country.UNKNOWN
+
     def normalize(self, tax_id: str, tax_id_type: TaxIdentifierType) -> str:
         """Return a whitespace-collapsed, uppercased tax identifier."""
 

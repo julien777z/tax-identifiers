@@ -5,6 +5,7 @@ from typing import Annotated, Final
 import pytest
 
 from tax_identifiers import (
+    ForeignTaxIdField,
     Country,
     MaskableUSTaxIdField,
     SSNTaxIdField,
@@ -57,6 +58,18 @@ class MaskedTaxIdHolder(BaseModel):
     """Test model accepting a masked US tax identifier."""
 
     tax_id: MaskableUSTaxIdField
+
+
+class SsnTaxIdHolder(BaseModel):
+    """Test model with an SSN-typed tax identifier field."""
+
+    tax_id: SSNTaxIdField
+
+
+class ForeignTaxIdHolder(BaseModel):
+    """Test model with a foreign-TIN tax identifier field."""
+
+    tax_id: ForeignTaxIdField
 
 
 class UnknownTaxIdHolder(BaseModel):

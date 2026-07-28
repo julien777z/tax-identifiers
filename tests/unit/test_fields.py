@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Annotated
 
 import pytest
 from pydantic import ValidationError
@@ -6,15 +7,20 @@ from pydantic import ValidationError
 from tax_identifiers import (
     ComparableUsTaxIdentifier,
     Country,
+    InvalidTaxIdError,
     TaxIdFieldOptions,
+    TaxIdStr,
     TaxIdentifierType,
     format_us_ssn,
     is_masked_tax_id,
 )
+from tax_identifiers.base import BaseModel
 from tax_identifiers.us.enums import USState
 from tests.conftest import (
+    ForeignTaxIdHolder,
     InlineUsTaxIdHolder,
     MaskedTaxIdHolder,
+    SsnTaxIdHolder,
     StateHolder,
     UnknownTaxIdHolder,
     UsTaxIdHolder,
@@ -119,3 +125,89 @@ class TestTaxIdFieldOptions:
 
         assert options.country is Country.UNKNOWN
         assert not options.allow_masked
+
+
+class TestSsnStructuralValidation:
+    """Test that the SSN field rejects identifiers its country's rules find invalid."""
+
+    @pytest.mark.parametrize(
+        "segments",
+        [
+            {"area": "000"},
+            {"area": "666"},
+            {"area": "900"},
+            {"group": "00"},
+            {"serial": "0000"},
+        ],
+        ids=["zero_area", "reserved_area", "high_area", "zero_group", "zero_serial"],
+    )
+    def test_rejects_reserved_identifiers(
+        self, tax_id_factory: Callable[..., str], segments: dict[str, str]
+    ) -> None:
+        """Test that each reserved SSN segment is rejected by the field."""
+
+        with pytest.raises(ValidationError, match="is not a valid"):
+            SsnTaxIdHolder(tax_id=tax_id_factory(TaxIdentifierType.SSN, **segments))
+
+    def test_accepts_a_structurally_valid_identifier(
+        self, tax_id_factory: Callable[..., str]
+    ) -> None:
+        """Test that a structurally valid SSN is still accepted."""
+
+        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+
+        assert SsnTaxIdHolder(tax_id=raw_tax_id).tax_id == raw_tax_id
+
+    def test_rejection_surfaces_as_a_validation_error(
+        self, tax_id_factory: Callable[..., str]
+    ) -> None:
+        """Test that the rejection reaches callers as a pydantic error, not a raw library error."""
+
+        reserved = tax_id_factory(TaxIdentifierType.SSN, area="666")
+
+        with pytest.raises(ValidationError):
+            SsnTaxIdHolder(tax_id=reserved)
+
+        assert issubclass(InvalidTaxIdError, ValueError)
+
+    def test_masked_input_bypasses_structural_validation(
+        self, masked_tax_id_factory: Callable[..., str]
+    ) -> None:
+        """Test that a mask-accepting field still takes masked input."""
+
+        masked = masked_tax_id_factory()
+
+        assert MaskedTaxIdHolder(tax_id=masked).tax_id == masked
+
+
+class TestPermissiveTaxIdFields:
+    """Test that fields whose rules cannot assert validity keep accepting their input."""
+
+    @pytest.mark.parametrize(
+        "holder",
+        [UsTaxIdHolder, ForeignTaxIdHolder, UnknownTaxIdHolder],
+        ids=["us_unspecified", "foreign", "unknown"],
+    )
+    def test_accepts_values_the_ssn_field_rejects(
+        self,
+        holder: type[UsTaxIdHolder] | type[ForeignTaxIdHolder] | type[UnknownTaxIdHolder],
+        tax_id_factory: Callable[..., str],
+    ) -> None:
+        """Test that a value reserved for SSNs still passes fields without SSN rules."""
+
+        reserved = tax_id_factory(TaxIdentifierType.SSN, area="666")
+
+        assert holder(tax_id=reserved).tax_id == reserved
+
+    def test_named_country_without_rules_is_accepted(self) -> None:
+        """Test that a country with no dedicated rules does not fail validation."""
+
+        class FrenchTinHolder(BaseModel):
+            """Test model with a French foreign-TIN field."""
+
+            tax_id: Annotated[
+                TaxIdStr,
+                TaxIdFieldOptions(country=Country.FR, tax_id_type=TaxIdentifierType.FOREIGN_TIN),
+            ]
+
+        assert FrenchTinHolder(tax_id=" fr-123 ").tax_id == "FR-123"
