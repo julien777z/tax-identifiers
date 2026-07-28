@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 from pydantic import BeforeValidator, GetCoreSchemaHandler, ValidatorFunctionWrapHandler
 from pydantic_core import core_schema
@@ -15,9 +15,9 @@ from tax_identifiers.masking import (
 from tax_identifiers.normalization import transform_required_string
 from tax_identifiers.rules import get_country_rules
 
-StrRequired = Annotated[str, "str_required", BeforeValidator(transform_required_string)]
+StrRequired: TypeAlias = Annotated[str, "str_required", BeforeValidator(transform_required_string)]
 
-TaxIdStr = Annotated[str, "tax_id"]
+TaxIdStr: TypeAlias = Annotated[str, "tax_id"]
 
 
 class TaxIdFieldOptions:
@@ -73,16 +73,16 @@ FOREIGN_OPTIONS = TaxIdFieldOptions(tax_id_type=TaxIdentifierType.FOREIGN_TIN)
 
 UNKNOWN_OPTIONS = TaxIdFieldOptions()
 
-SSNTaxIdField = Annotated[TaxIdStr, SSN_OPTIONS]
+SSNTaxIdField: TypeAlias = Annotated[TaxIdStr, SSN_OPTIONS]
 
-USTaxIdField = Annotated[TaxIdStr, US_OPTIONS]
+USTaxIdField: TypeAlias = Annotated[TaxIdStr, US_OPTIONS]
 
-ForeignTaxIdField = Annotated[TaxIdStr, FOREIGN_OPTIONS]
+ForeignTaxIdField: TypeAlias = Annotated[TaxIdStr, FOREIGN_OPTIONS]
 
-UnknownTaxIdField = Annotated[TaxIdStr, UNKNOWN_OPTIONS]
+UnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, UNKNOWN_OPTIONS]
 
-MaskableUSTaxIdField = Annotated[TaxIdStr, US_OPTIONS.maskable]
+MaskableUSTaxIdField: TypeAlias = Annotated[TaxIdStr, US_OPTIONS.maskable]
 
-MaskableForeignTaxIdField = Annotated[TaxIdStr, FOREIGN_OPTIONS.maskable]
+MaskableForeignTaxIdField: TypeAlias = Annotated[TaxIdStr, FOREIGN_OPTIONS.maskable]
 
-MaskableUnknownTaxIdField = Annotated[TaxIdStr, UNKNOWN_OPTIONS.maskable]
+MaskableUnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, UNKNOWN_OPTIONS.maskable]
