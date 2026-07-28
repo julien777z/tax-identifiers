@@ -135,11 +135,14 @@ masked.to_unmask().tax_id      # "123-45-6789", original recovered
 
 A field rejects a value its country's rules find structurally invalid, raising `InvalidTaxIdError`. Because that subclasses `ValueError`, pydantic reports it as a `ValidationError` like any other field failure. Only countries with dedicated rules assert validity, so today that means `SSNTaxIdField` rejects reserved SSN ranges and the other aliases accept whatever normalizes.
 
+`LenientSSNTaxIdField` normalizes and carries the same SSN metadata but does not reject, for parsing payloads from a third party whose values you do not control. Any annotation can opt out the same way with `TaxIdFieldOptions(..., assert_validity=False)`.
+
 The shipped aliases. A `Maskable` name accepts a value that is already masked, such as `"*****6789"` read back from storage; the others reject one. Masked values skip the validity check.
 
 | Alias | Country | Type | Accepts masked input |
 |-------|---------|------|----------------------|
 | `SSNTaxIdField` | US | SSN | no |
+| `LenientSSNTaxIdField` | US | SSN | no |
 | `USTaxIdField` | US | unspecified | no |
 | `ForeignTaxIdField` | `UNKNOWN` | foreign TIN | no |
 | `UnknownTaxIdField` | `UNKNOWN` | unspecified | no |

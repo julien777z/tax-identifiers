@@ -22,12 +22,14 @@ class TaxIdFieldOptions:
         country: Country = Country.UNKNOWN,
         tax_id_type: TaxIdentifierType = TaxIdentifierType.US_UNSPECIFIED,
         allow_masked: bool = False,
+        assert_validity: bool = True,
     ):
         """Store tax ID field options for downstream validators."""
 
         self.country = country
         self.tax_id_type = tax_id_type
         self.allow_masked = allow_masked
+        self.assert_validity = assert_validity
 
     def __get_pydantic_core_schema__(
         self, source_type: object, handler: GetCoreSchemaHandler
@@ -48,7 +50,11 @@ class TaxIdFieldOptions:
         rules = get_country_rules(self.country)
         normalized = rules.normalize(handler(value), self.tax_id_type)
 
-        if rules.can_assert_validity and not rules.is_valid(normalized, self.tax_id_type):
+        if (
+            self.assert_validity
+            and rules.can_assert_validity
+            and not rules.is_valid(normalized, self.tax_id_type)
+        ):
             raise InvalidTaxIdError(
                 f"{self.tax_id_type} value is not a valid {self.country} tax identifier"
             )

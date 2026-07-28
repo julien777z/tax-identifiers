@@ -19,6 +19,8 @@ from tax_identifiers.us.enums import USState
 from tests.conftest import (
     ForeignTaxIdHolder,
     InlineUsTaxIdHolder,
+    LenientSsnTaxIdHolder,
+    LenientTaxIdentifierHolder,
     MaskedTaxIdHolder,
     SsnTaxIdHolder,
     StateHolder,
@@ -211,3 +213,44 @@ class TestPermissiveTaxIdFields:
             ]
 
         assert FrenchTinHolder(tax_id=" fr-123 ").tax_id == "FR-123"
+
+
+class TestLenientSsnTaxIdField:
+    """Test that the lenient SSN field normalizes without asserting structural validity."""
+
+    @pytest.mark.parametrize(
+        "segments",
+        [{"area": "000"}, {"area": "666"}, {"area": "900"}, {"group": "00"}, {"serial": "0000"}],
+        ids=["zero_area", "reserved_area", "high_area", "zero_group", "zero_serial"],
+    )
+    def test_accepts_identifiers_the_strict_field_rejects(
+        self, tax_id_factory: Callable[..., str], segments: dict[str, str]
+    ) -> None:
+        """Test that a reserved SSN passes the lenient field."""
+
+        reserved = tax_id_factory(TaxIdentifierType.SSN, **segments)
+
+        assert LenientSsnTaxIdHolder(tax_id=reserved).tax_id == reserved
+
+    def test_normalizes_identically_to_the_strict_field(
+        self, tax_id_factory: Callable[..., str]
+    ) -> None:
+        """Test that the lenient field normalizes exactly as the strict field does."""
+
+        formatted = format_us_ssn(tax_id_factory(TaxIdentifierType.SSN))
+
+        lenient = LenientSsnTaxIdHolder(tax_id=formatted)
+        strict = SsnTaxIdHolder(tax_id=formatted)
+
+        assert lenient.tax_id == strict.tax_id
+        assert type(lenient.tax_id) is type(strict.tax_id)
+
+    def test_still_declares_the_ssn_type(self, tax_id_factory: Callable[..., str]) -> None:
+        """Test that the lenient field keeps the country and type metadata the mixin reads."""
+
+        holder = LenientTaxIdentifierHolder(
+            tax_id=tax_id_factory(TaxIdentifierType.SSN, area="666")
+        )
+
+        assert holder.tax_identifier_country is Country.US
+        assert holder.tax_identifier_type is TaxIdentifierType.SSN

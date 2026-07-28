@@ -8,6 +8,7 @@ from tax_identifiers import (
     MaskableForeignTaxIdField,
     MaskableUSTaxIdField,
     MaskableUnknownTaxIdField,
+    LenientSSNTaxIdField,
     SSNTaxIdField,
     TaxIdFieldOptions,
     TaxIdStr,
@@ -24,6 +25,7 @@ from tests.conftest import TaxIdentifierHolder
 COVERED_FIELD_TYPES: Final[frozenset[str]] = frozenset(
     {
         "SSNTaxIdField",
+        "LenientSSNTaxIdField",
         "USTaxIdField",
         "ForeignTaxIdField",
         "UnknownTaxIdField",
@@ -44,6 +46,7 @@ class TaxIdFieldHolder(BaseModel):
     """Model annotated with every shipped tax identifier alias."""
 
     ssn: SSNTaxIdField
+    lenient_ssn: LenientSSNTaxIdField
     us: USTaxIdField
     foreign: ForeignTaxIdField
     unknown: UnknownTaxIdField
@@ -82,6 +85,7 @@ class TestStaticAnnotations:
         raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
         holder = TaxIdFieldHolder(
             ssn=raw_tax_id,
+            lenient_ssn=raw_tax_id,
             us=raw_tax_id,
             foreign=tax_id_factory(TaxIdentifierType.FOREIGN_TIN),
             unknown=raw_tax_id,

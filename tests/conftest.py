@@ -6,6 +6,7 @@ import pytest
 
 from tax_identifiers import (
     ForeignTaxIdField,
+    LenientSSNTaxIdField,
     Country,
     MaskableUSTaxIdField,
     SSNTaxIdField,
@@ -36,6 +37,12 @@ class TaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
     tax_id: SSNTaxIdField
 
 
+class LenientTaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
+    """Test model pairing the masking mixin with a lenient SSN field."""
+
+    tax_id: LenientSSNTaxIdField
+
+
 class PlainHolder(TaxIdentifierPairMixin, BaseModel):
     """Test model with the mixin but no tax identifier fields."""
 
@@ -64,6 +71,12 @@ class SsnTaxIdHolder(BaseModel):
     """Test model with an SSN-typed tax identifier field."""
 
     tax_id: SSNTaxIdField
+
+
+class LenientSsnTaxIdHolder(BaseModel):
+    """Test model with an SSN-typed field that does not assert structural validity."""
+
+    tax_id: LenientSSNTaxIdField
 
 
 class ForeignTaxIdHolder(BaseModel):

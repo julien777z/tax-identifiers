@@ -20,6 +20,10 @@ FOREIGN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
 )
 UNKNOWN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions()
 
+LENIENT_SSN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
+    country=Country.US, tax_id_type=TaxIdentifierType.SSN, assert_validity=False
+)
+
 MASKABLE_US_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
     country=Country.US, allow_masked=True
 )
@@ -29,6 +33,8 @@ MASKABLE_FOREIGN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(
 MASKABLE_UNKNOWN_OPTIONS: Final[TaxIdFieldOptions] = TaxIdFieldOptions(allow_masked=True)
 
 SSNTaxIdField: TypeAlias = Annotated[TaxIdStr, SSN_OPTIONS]
+
+LenientSSNTaxIdField: TypeAlias = Annotated[TaxIdStr, LENIENT_SSN_OPTIONS]
 
 USTaxIdField: TypeAlias = Annotated[TaxIdStr, US_OPTIONS]
 

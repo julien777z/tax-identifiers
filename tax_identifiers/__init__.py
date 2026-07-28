@@ -13,6 +13,7 @@ from tax_identifiers.exceptions import (
 )
 from tax_identifiers.fields import (
     ForeignTaxIdField,
+    LenientSSNTaxIdField,
     MaskableForeignTaxIdField,
     MaskableUnknownTaxIdField,
     MaskableUSTaxIdField,
@@ -64,6 +65,7 @@ __all__ = [
     "TaxIdFieldOptions",
     "TaxIdStr",
     "SSNTaxIdField",
+    "LenientSSNTaxIdField",
     "USTaxIdField",
     "ForeignTaxIdField",
     "UnknownTaxIdField",
