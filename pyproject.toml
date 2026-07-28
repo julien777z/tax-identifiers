@@ -19,23 +19,22 @@ Repository = "https://github.com/julien777z/tax-identifiers"
 [project.optional-dependencies]
 dev = [
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "coverage>=7.15.0",
     "pyright>=1.1.407",
+    "black>=25.9.0",
 ]
 
 [tool.black]
-line-length = 110
+line-length = 100
 target-version = ["py311", "py312", "py313", "py314"]
-
-[tool.isort]
-profile = "black"
-line_length = 110
 
 [tool.pyright]
 include = ["tax_identifiers", "tests", "scripts"]
 pythonVersion = "3.11"
-typeCheckingMode = "standard"
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
 
 [[tool.pyright.executionEnvironments]]
 root = "tests/unit"
@@ -43,6 +42,7 @@ reportArgumentType = "none"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 
 [project.scripts]
 tests = "scripts.run_tests:main"
@@ -59,5 +59,5 @@ include = [
 ]
 
 [build-system]
-requires = ["poetry-core", "setuptools"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
