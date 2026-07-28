@@ -20,11 +20,11 @@ class Contractor(BaseModel):
     tax_id: SSNTaxIdField
 ```
 
-Configuration lives in metadata objects inside `Annotated`, so a field type is always a name you can annotate with — never a call. The package ships a PEP 561 `py.typed` marker, and pyright checks the whole package plus its test suite in CI.
+Configuration lives in metadata objects inside `Annotated`, so a field type is always a name you can annotate with, never a call. The package ships a PEP 561 `py.typed` marker, and pyright checks the whole package plus its test suite in CI.
 
 ## Quick Start
 
-Construct a `TaxValidator` for a country and validate an identifier — the validator normalizes the value, applies that country's structural rules, and resolves any metadata. Currently, only the US validators have dedicated validation rules; every other country falls back to generic normalization.
+Construct a `TaxValidator` for a country and validate an identifier. The validator normalizes the value, applies that country's structural rules, and resolves any metadata. Currently, only the US validators have dedicated validation rules; every other country falls back to generic normalization.
 
 ```python
 from tax_identifiers import TaxValidator, Country, TaxIdentifierType
@@ -32,10 +32,10 @@ from tax_identifiers import TaxValidator, Country, TaxIdentifierType
 validator = TaxValidator(Country.US)
 result = validator.validate("123-45-6789", TaxIdentifierType.SSN)
 
-result.valid                   # True — passes the SSN reserved-range checks
+result.valid                   # True, passes the SSN reserved-range checks
 result.country                 # Country.US
 result.tax_id_type             # TaxIdentifierType.SSN
-result.metadata.issued_state   # a USState enum — e.g. USState.NEW_YORK ("NY")
+result.metadata.issued_state   # a USState enum, e.g. USState.NEW_YORK ("NY")
 result.metadata.issued_years   # e.g. "1936-1950"
 ```
 
@@ -43,18 +43,18 @@ result.metadata.issued_years   # e.g. "1936-1950"
 
 ## Resolving Countries
 
-`Country.from_string` normalizes codes and names — `"US"`, `"us"`, `"United States"`, and `"USA"` all resolve to `Country.US` — so a validator can be built straight from a stored country string:
+`Country.from_string` normalizes codes and names, so `"US"`, `"us"`, `"United States"`, and `"USA"` all resolve to `Country.US`. A validator can be built straight from a stored country string:
 
 ```python
 validator = TaxValidator(Country.from_string(row.country))   # ISO code or full name
 ```
 
-A **named** country without dedicated rules can't assert validity — its validator raises `NotImplementedError`:
+A **named** country without dedicated rules can't assert validity, so its validator raises `NotImplementedError`:
 
 ```python
 TaxValidator(Country.from_string("France")).validate(
     "FR1234567", TaxIdentifierType.FOREIGN_TIN
-)   # raises NotImplementedError — no validation rules for France
+)   # raises NotImplementedError, no validation rules for France
 ```
 
 `Country.UNKNOWN` is the country-agnostic exception: it accepts any non-empty identifier, so foreign identifiers of any shape validate against it.
@@ -67,13 +67,13 @@ Country.from_string("Atlantis")   # raises UnknownCountryError
 
 ## Error Handling
 
-`validate` raises on malformed or unsupported input. A parseable-but-reserved identifier is *not* an error — it comes back with `valid=False`:
+`validate` raises on malformed or unsupported input. A parseable-but-reserved identifier is *not* an error. It comes back with `valid=False`:
 
 ```python
 from tax_identifiers import InvalidTaxIdError, UnsupportedTaxIdTypeError
 
-validator.validate("666-12-3456", TaxIdentifierType.SSN).valid          # False — 666 is a reserved area
-validator.validate("123-45-67890", TaxIdentifierType.SSN)               # raises InvalidTaxIdError — 10 digits
+validator.validate("666-12-3456", TaxIdentifierType.SSN).valid          # False, 666 is a reserved area
+validator.validate("123-45-67890", TaxIdentifierType.SSN)               # raises InvalidTaxIdError, 10 digits
 TaxValidator(Country.US).validate("X1", TaxIdentifierType.FOREIGN_TIN)  # raises UnsupportedTaxIdTypeError
 ```
 
@@ -98,7 +98,7 @@ from tax_identifiers import clean_us_tax_identifier, format_us_ssn, format_us_ei
 clean_us_tax_identifier(" 123-45-6789 ")                  # "123456789"
 format_us_ssn("123456789")                                # "123-45-6789"
 format_us_ein("123456789")                                # "12-3456789"
-ComparableUsTaxIdentifier("123-45-6789") == "123456789"   # True — equality ignores formatting
+ComparableUsTaxIdentifier("123-45-6789") == "123456789"   # True, equality ignores formatting
 ```
 
 `build_string_normalizer` builds a normalizer you can attach with pydantic's own `AfterValidator`:
@@ -144,23 +144,24 @@ class ContractorTaxInfo(TaxIdentifierPairMixin, BaseModel):
 
 
 record = ContractorTaxInfo(name="Jane Doe", tax_id="123-45-6789")
-record.tax_id == "123456789"   # normalized on construction — equality ignores formatting
+record.tax_id == "123456789"   # normalized on construction, equality ignores formatting
 
 masked = record.to_masked()
 masked.tax_id                  # "*******6789"
-masked.to_unmask().tax_id      # "123-45-6789" — original recovered
+masked.to_unmask().tax_id      # "123-45-6789", original recovered
 ```
 
-The shipped aliases:
+The shipped aliases. A `Maskable` name accepts a value that is already masked, such as `"*****6789"` read back from storage; the others reject one.
 
-| Alias | Country | Type | Maskable twin |
-|-------|---------|------|---------------|
-| `SSNTaxIdField` | US | SSN | — |
-| `USTaxIdField` | US | unspecified | `MaskableUSTaxIdField` |
-| `ForeignTaxIdField` | `UNKNOWN` | foreign TIN | `MaskableForeignTaxIdField` |
-| `UnknownTaxIdField` | `UNKNOWN` | unspecified | `MaskableUnknownTaxIdField` |
-
-A `Maskable` twin accepts already-masked input; the plain alias rejects it.
+| Alias | Country | Type | Accepts masked input |
+|-------|---------|------|----------------------|
+| `SSNTaxIdField` | US | SSN | no |
+| `USTaxIdField` | US | unspecified | no |
+| `ForeignTaxIdField` | `UNKNOWN` | foreign TIN | no |
+| `UnknownTaxIdField` | `UNKNOWN` | unspecified | no |
+| `MaskableUSTaxIdField` | US | unspecified | yes |
+| `MaskableForeignTaxIdField` | `UNKNOWN` | foreign TIN | yes |
+| `MaskableUnknownTaxIdField` | `UNKNOWN` | unspecified | yes |
 
 For any other combination, put `TaxIdFieldOptions` inside an `Annotated`:
 
@@ -175,7 +176,7 @@ FrenchTinField = Annotated[
 ]
 ```
 
-`TaxIdFieldOptions` defaults to `Country.UNKNOWN` — a country-agnostic field that normalizes (uppercases) but is never validated. Pass `country=Country.US` to apply a country's rules.
+`TaxIdFieldOptions` defaults to `Country.UNKNOWN`, a country-agnostic field that normalizes (uppercases) but is never validated. Pass `country=Country.US` to apply a country's rules.
 
 ## Run Tests
 
