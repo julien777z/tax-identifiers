@@ -60,12 +60,12 @@ result.metadata.issued_years   # e.g. "1936-1950"
 validator = TaxValidator(Country.from_string(row.country))   # ISO code or full name
 ```
 
-A **named** country without dedicated rules can't assert validity, so its validator raises `NotImplementedError`:
+A **named** country without dedicated rules can't decide validity, so it reports `valid` as `None` rather than guessing:
 
 ```python
 TaxValidator(Country.from_string("France")).validate(
     "FR1234567", TaxIdentifierType.FOREIGN_TIN
-)   # raises NotImplementedError, no validation rules for France
+).valid   # None, no validation rules for France
 ```
 
 `Country.UNKNOWN` is the country-agnostic exception: it accepts any non-empty identifier, so foreign identifiers of any shape validate against it.
@@ -78,7 +78,7 @@ Country.from_string("Atlantis")   # raises UnknownCountryError
 
 ## Error Handling
 
-`validate` raises on malformed or unsupported input. A parseable-but-reserved identifier is *not* an error. It comes back with `valid=False`:
+`validate` raises on malformed or unsupported input. A parseable-but-reserved identifier is *not* an error. It comes back with `valid=False`, and a country whose rules cannot decide comes back with `valid=None`:
 
 ```python
 from tax_identifiers import InvalidTaxIdError, UnsupportedTaxIdTypeError
@@ -87,6 +87,8 @@ validator.validate("666-12-3456", TaxIdentifierType.SSN).valid          # False,
 validator.validate("123-45-67890", TaxIdentifierType.SSN)               # raises InvalidTaxIdError, 10 digits
 TaxValidator(Country.US).validate("X1", TaxIdentifierType.FOREIGN_TIN)  # raises UnsupportedTaxIdTypeError
 ```
+
+Each country handles a fixed set of identifier types, so a field declared with a pair its country does not handle raises `UnsupportedTaxIdTypeError` when the model class is built, not when a value arrives.
 
 `TaxValidationResult.from_tax_identifier` returns `None` for missing or malformed input instead of raising:
 
@@ -133,7 +135,7 @@ masked.tax_id                  # "*******6789"
 masked.to_unmask().tax_id      # "123-45-6789", original recovered
 ```
 
-A field rejects a value its country's rules find structurally invalid, raising `InvalidTaxIdError`. Because that subclasses `ValueError`, pydantic reports it as a `ValidationError` like any other field failure. Only countries with dedicated rules assert validity, so today that means `SSNTaxIdField` rejects reserved SSN ranges and the other aliases accept whatever normalizes.
+A field rejects a value its country's rules find structurally invalid, raising `InvalidTaxIdError`. Because that subclasses `ValueError`, pydantic reports it as a `ValidationError` like any other field failure. A country whose rules cannot decide validity rejects nothing, so today that means `SSNTaxIdField` rejects reserved SSN ranges and the other aliases accept whatever normalizes.
 
 `LenientSSNTaxIdField` normalizes and carries the same SSN metadata but does not reject, for parsing payloads from a third party whose values you do not control. Any annotation can opt out the same way with `TaxIdFieldOptions(..., assert_validity=False)`.
 
@@ -145,10 +147,10 @@ The shipped aliases. A `Maskable` name accepts a value that is already masked, s
 | `LenientSSNTaxIdField` | US | SSN | no |
 | `USTaxIdField` | US | unspecified | no |
 | `ForeignTaxIdField` | `UNKNOWN` | foreign TIN | no |
-| `UnknownTaxIdField` | `UNKNOWN` | unspecified | no |
+| `UnknownTaxIdField` | `UNKNOWN` | none | no |
 | `MaskableUSTaxIdField` | US | unspecified | yes |
 | `MaskableForeignTaxIdField` | `UNKNOWN` | foreign TIN | yes |
-| `MaskableUnknownTaxIdField` | `UNKNOWN` | unspecified | yes |
+| `MaskableUnknownTaxIdField` | `UNKNOWN` | none | yes |
 
 For any other combination, put `TaxIdFieldOptions` inside an `Annotated`:
 
@@ -163,7 +165,7 @@ FrenchTinField = Annotated[
 ]
 ```
 
-`TaxIdFieldOptions` defaults to `Country.UNKNOWN`, a country-agnostic field that normalizes (uppercases) but is never validated. Pass `country=Country.US` to apply a country's rules.
+`TaxIdFieldOptions` defaults to `Country.UNKNOWN` with `TaxIdentifierType.NONE`, a country-agnostic field that normalizes (uppercases) and accepts any non-empty value. Pass `country=Country.US` to apply a country's rules, along with a `tax_id_type` that country handles.
 
 ## Local Development
 
