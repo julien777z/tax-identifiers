@@ -37,8 +37,8 @@ class TaxIdentifier(BaseModel):
 
     @computed_field
     @property
-    def valid(self) -> bool:
-        """Return whether the identifier passes its country's structural checks."""
+    def valid(self) -> bool | None:
+        """Return whether the identifier passes its country's structural checks, or None."""
 
         return get_country_rules(self.country).is_valid(str(self.tax_id), self.tax_id_type)
 
@@ -68,7 +68,7 @@ class TaxValidationResult(BaseModel):
 
     country: Country
     tax_id_type: TaxIdentifierType
-    valid: bool
+    valid: bool | None
     metadata: SerializeAsAny[TaxIdentifierMetadata] | None = None
 
     @classmethod

@@ -1,13 +1,11 @@
 from typing import TYPE_CHECKING, Self
 
-from pydantic import model_validator
 from pydantic_super_model import AnnotatedFieldInfo, SuperModelPydanticMixin
 
+from tax_identifiers.annotations import TaxIdFieldOptions
 from tax_identifiers.countries import Country
 from tax_identifiers.enums import TaxIdentifierType
-from tax_identifiers.annotations import TaxIdFieldOptions
-from tax_identifiers.masking import is_masked_tax_id, mask_tax_id
-from tax_identifiers.rules import get_country_rules
+from tax_identifiers.masking import mask_tax_id
 
 if TYPE_CHECKING:
     MixinHost = SuperModelPydanticMixin
@@ -30,32 +28,6 @@ def matched_tax_id_options(field_info: AnnotatedFieldInfo) -> TaxIdFieldOptions 
 
 class TaxIdentifierPairMixin(MixinHost):
     """Normalize and mask tax identifier fields using tax-id annotation metadata."""
-
-    @model_validator(mode="after")
-    def normalize_tax_identifier_fields_if_present(self) -> Self:
-        """Normalize tax identifier fields using each field's country rules."""
-
-        if getattr(self, "_tax_identifiers_masked", False):
-            return self
-
-        tax_id_fields = self.get_annotated_fields(TaxIdFieldOptions)
-
-        for field_name, field_info in tax_id_fields.items():
-            options = matched_tax_id_options(field_info)
-            if options is None:
-                continue
-
-            value = getattr(self, field_name, None)
-            if not isinstance(value, str):
-                continue
-
-            if is_masked_tax_id(value):
-                continue
-
-            normalized = get_country_rules(options.country).normalize(value, options.tax_id_type)
-            object.__setattr__(self, field_name, normalized)
-
-        return self
 
     def tax_id_field_options(self, field_name: str) -> TaxIdFieldOptions | None:
         """Return tax-id field metadata when present."""

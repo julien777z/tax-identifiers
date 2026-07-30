@@ -97,15 +97,19 @@ class TestTaxValidationResultFromTaxIdentifier:
         assert summary is not None
         assert "tax_id" not in summary.model_dump()
 
-    def test_raises_for_country_without_rules(self, tax_id_factory: Callable[..., str]) -> None:
-        """Test that summarizing a country without dedicated rules raises NotImplementedError."""
+    def test_reports_undecided_validity_for_country_without_rules(
+        self, tax_id_factory: Callable[..., str]
+    ) -> None:
+        """Test that summarizing a country without dedicated rules leaves validity undecided."""
 
-        with pytest.raises(NotImplementedError):
-            TaxValidationResult.from_tax_identifier(
-                country=Country.FR,
-                tax_id=tax_id_factory(TaxIdentifierType.FOREIGN_TIN),
-                tax_id_type=TaxIdentifierType.FOREIGN_TIN,
-            )
+        summary = TaxValidationResult.from_tax_identifier(
+            country=Country.FR,
+            tax_id=tax_id_factory(TaxIdentifierType.FOREIGN_TIN),
+            tax_id_type=TaxIdentifierType.FOREIGN_TIN,
+        )
+
+        assert summary is not None
+        assert summary.valid is None
 
     def test_metadata_survives_validation_round_trip(self, allocated_ssn: AllocatedSsn) -> None:
         """Test that resolved metadata survives a dump/validate/dump cycle."""

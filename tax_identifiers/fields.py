@@ -20,7 +20,10 @@ LenientSSNTaxIdField: TypeAlias = Annotated[
     TaxIdFieldOptions(country=Country.US, tax_id_type=TaxIdentifierType.SSN, assert_validity=False),
 ]
 
-USTaxIdField: TypeAlias = Annotated[TaxIdStr, TaxIdFieldOptions(country=Country.US)]
+USTaxIdField: TypeAlias = Annotated[
+    TaxIdStr,
+    TaxIdFieldOptions(country=Country.US, tax_id_type=TaxIdentifierType.US_UNSPECIFIED),
+]
 
 ForeignTaxIdField: TypeAlias = Annotated[
     TaxIdStr, TaxIdFieldOptions(tax_id_type=TaxIdentifierType.FOREIGN_TIN)
@@ -29,7 +32,12 @@ ForeignTaxIdField: TypeAlias = Annotated[
 UnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, TaxIdFieldOptions()]
 
 MaskableUSTaxIdField: TypeAlias = Annotated[
-    TaxIdStr, TaxIdFieldOptions(country=Country.US, allow_masked=True)
+    TaxIdStr,
+    TaxIdFieldOptions(
+        country=Country.US,
+        tax_id_type=TaxIdentifierType.US_UNSPECIFIED,
+        allow_masked=True,
+    ),
 ]
 
 MaskableForeignTaxIdField: TypeAlias = Annotated[

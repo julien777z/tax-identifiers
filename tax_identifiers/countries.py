@@ -5,11 +5,8 @@ from tax_identifiers.exceptions import UnknownCountryError
 from tax_identifiers.normalization import collapse_whitespace
 
 
-def normalize_country_code(value: object) -> str:
+def normalize_country_code(value: str) -> str:
     """Normalize a country code or name to a Country member's alpha-2 code."""
-
-    if not isinstance(value, str):
-        raise UnknownCountryError("Country must be a string")
 
     normalized = collapse_whitespace(value)
 

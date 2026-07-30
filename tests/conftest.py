@@ -49,6 +49,18 @@ class PlainHolder(TaxIdentifierPairMixin, BaseModel):
     name: str
 
 
+class UnmixedSsnHolder(BaseModel):
+    """Test model with an SSN field and no masking mixin."""
+
+    tax_id: SSNTaxIdField
+
+
+class MixedUnknownTaxIdHolder(TaxIdentifierPairMixin, BaseModel):
+    """Test model pairing the masking mixin with a country-agnostic field."""
+
+    tax_id: UnknownTaxIdField
+
+
 class StateHolder(BaseModel):
     """Test model with a US state field."""
 
@@ -82,7 +94,10 @@ class UnknownTaxIdHolder(BaseModel):
 class InlineUsTaxIdHolder(BaseModel):
     """Test model configuring a US tax identifier field inline rather than through an alias."""
 
-    tax_id: Annotated[TaxIdStr, TaxIdFieldOptions(country=Country.US)]
+    tax_id: Annotated[
+        TaxIdStr,
+        TaxIdFieldOptions(country=Country.US, tax_id_type=TaxIdentifierType.US_UNSPECIFIED),
+    ]
 
 
 class CountryHolder(BaseModel):

@@ -16,17 +16,18 @@ from tax_identifiers import (
 class TestGenericTaxValidation:
     """Test that countries without dedicated rules fall back to generic handling."""
 
-    def test_named_country_validation_is_not_implemented(
+    def test_named_country_reports_undecided_validity(
         self, tax_id_factory: Callable[..., str]
     ) -> None:
-        """Test that a named country without dedicated rules raises NotImplementedError."""
+        """Test that a named country without dedicated rules reports validity as undecided."""
 
         validator = TaxValidator(Country.from_string("France"))
 
-        with pytest.raises(NotImplementedError):
-            validator.validate(
-                tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
-            )
+        result = validator.validate(
+            tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
+        )
+
+        assert result.valid is None
 
     def test_rejects_us_specific_type_for_generic_country(
         self, tax_id_factory: Callable[..., str]
@@ -49,15 +50,19 @@ class TestGenericTaxRules:
 
         assert rules.normalize("  fr-12 ab ", TaxIdentifierType.FOREIGN_TIN) == "FR-12 AB"
 
-    def test_is_valid_is_not_implemented(self, tax_id_factory: Callable[..., str]) -> None:
-        """Test that validity cannot be determined without country-specific rules."""
+    def test_is_valid_is_undecided_for_a_named_country(
+        self, tax_id_factory: Callable[..., str]
+    ) -> None:
+        """Test that validity is undecided without country-specific rules."""
 
         rules = GenericTaxRules(Country.FR)
 
-        with pytest.raises(NotImplementedError):
+        assert (
             rules.is_valid(
                 tax_id_factory(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
             )
+            is None
+        )
 
     def test_resolves_no_metadata(self, tax_id_factory: Callable[..., str]) -> None:
         """Test that generic rules resolve no country-specific metadata."""
