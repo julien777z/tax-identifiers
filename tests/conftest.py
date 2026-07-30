@@ -1,6 +1,6 @@
 import random
 from collections.abc import Callable
-from typing import Annotated, Final
+from typing import Final
 
 import pytest
 
@@ -8,10 +8,10 @@ from tax_identifiers import (
     Country,
     ForeignTaxIdField,
     LenientSSNTaxIdField,
+    MaskableForeignTaxIdField,
+    MaskableUnknownTaxIdField,
     MaskableUSTaxIdField,
     SSNTaxIdField,
-    TaxIdFieldOptions,
-    TaxIdStr,
     TaxIdentifier,
     TaxIdentifierPairMixin,
     TaxIdentifierType,
@@ -49,55 +49,28 @@ class PlainHolder(TaxIdentifierPairMixin, BaseModel):
     name: str
 
 
-class UnmixedSsnHolder(BaseModel):
-    """Test model with an SSN field and no masking mixin."""
+class TaxIdFieldHolder(BaseModel):
+    """Test model annotated with every shipped tax identifier alias."""
 
-    tax_id: SSNTaxIdField
+    ssn: SSNTaxIdField
+    lenient_ssn: LenientSSNTaxIdField
+    us: USTaxIdField
+    foreign: ForeignTaxIdField
+    unknown: UnknownTaxIdField
 
 
-class MixedUnknownTaxIdHolder(TaxIdentifierPairMixin, BaseModel):
-    """Test model pairing the masking mixin with a country-agnostic field."""
+class MaskableTaxIdFieldHolder(BaseModel):
+    """Test model annotated with every shipped mask-accepting tax identifier alias."""
 
-    tax_id: UnknownTaxIdField
+    us: MaskableUSTaxIdField
+    foreign: MaskableForeignTaxIdField
+    unknown: MaskableUnknownTaxIdField
 
 
 class StateHolder(BaseModel):
     """Test model with a US state field."""
 
     state: USStateField
-
-
-class UsTaxIdHolder(BaseModel):
-    """Test model with a US tax identifier field."""
-
-    tax_id: USTaxIdField
-
-
-class MaskedTaxIdHolder(BaseModel):
-    """Test model accepting a masked US tax identifier."""
-
-    tax_id: MaskableUSTaxIdField
-
-
-class ForeignTaxIdHolder(BaseModel):
-    """Test model with a foreign-TIN tax identifier field."""
-
-    tax_id: ForeignTaxIdField
-
-
-class UnknownTaxIdHolder(BaseModel):
-    """Test model with a country-agnostic tax identifier field."""
-
-    tax_id: UnknownTaxIdField
-
-
-class InlineUsTaxIdHolder(BaseModel):
-    """Test model configuring a US tax identifier field inline rather than through an alias."""
-
-    tax_id: Annotated[
-        TaxIdStr,
-        TaxIdFieldOptions(country=Country.US, tax_id_type=TaxIdentifierType.US_UNSPECIFIED),
-    ]
 
 
 class CountryHolder(BaseModel):
@@ -211,6 +184,42 @@ def tax_identifier_holder_factory(
 
     def _build(**overrides: str) -> TaxIdentifierHolder:
         return TaxIdentifierHolder(**{"tax_id": tax_id_factory(TaxIdentifierType.SSN), **overrides})
+
+    return _build
+
+
+@pytest.fixture
+def tax_id_field_holder_factory(
+    tax_id_factory: Callable[..., str],
+) -> Callable[..., TaxIdFieldHolder]:
+    """Build TaxIdFieldHolder instances with a valid value in every aliased field."""
+
+    def _build(**overrides: object) -> TaxIdFieldHolder:
+        tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        defaults: dict[str, object] = {
+            "ssn": tax_id,
+            "lenient_ssn": tax_id,
+            "us": tax_id,
+            "foreign": tax_id_factory(TaxIdentifierType.FOREIGN_TIN),
+            "unknown": tax_id,
+        }
+
+        return TaxIdFieldHolder.model_validate({**defaults, **overrides})
+
+    return _build
+
+
+@pytest.fixture
+def maskable_tax_id_field_holder_factory(
+    masked_tax_id_factory: Callable[..., str],
+) -> Callable[..., MaskableTaxIdFieldHolder]:
+    """Build MaskableTaxIdFieldHolder instances with a masked value in every aliased field."""
+
+    def _build(**overrides: object) -> MaskableTaxIdFieldHolder:
+        masked = masked_tax_id_factory()
+        defaults: dict[str, object] = {"us": masked, "foreign": masked, "unknown": masked}
+
+        return MaskableTaxIdFieldHolder.model_validate({**defaults, **overrides})
 
     return _build
 
