@@ -82,6 +82,9 @@ class Report(BaseModel):
 - Never create shim modules that only re-export symbols from another package for backwards compatibility; update all consumers to import from the canonical source instead.
 - Place generic, stateless, cross-cutting helpers in a `utils.py` module or `utils/` package.
 - Use a `utils.py` module for a small cohesive set of utilities; use a `utils/` package when separate focused utility modules are warranted.
+- Never use a `*_utils.py` module-name suffix (no `datetime_utils.py`); name the module by its topic inside `utils/`.
+- Give a `utils/` package topic-named modules (for example `utils/datetime.py`, `utils/pagination.py`) rather than one flat module.
+- A `utils/__init__.py` stays empty or imports + `__all__` only; consumers import from the specific submodule.
 - Keep domain and orchestration behavior in their owning modules. Do not use utilities as a dumping ground.
 - Narrow exception: `__main__.py` entrypoints may use same-package relative imports for bootstrap (for example `from .runtime import main`), and `__init__.py` may use explicit relative imports when assembling the package’s public surface.
 

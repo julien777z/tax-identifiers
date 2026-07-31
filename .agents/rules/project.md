@@ -5,12 +5,6 @@ alwaysApply: true
 
 # Project Rules
 
-## Documentation
-
-- Document current behavior only. Never describe what a symbol used to do, what was removed, renamed, or deprecated, and never write migration tables or upgrade notes.
-- This project has a single known consumer, so there is no external audience for a deprecation path. Git history is the record of what changed; the README describes what exists now.
-- The same applies to code comments and docstrings: no "formerly", "replaces", or "kept for backwards compatibility" notes.
-
 ## Version Bumps
 
 - Never edit `version` in `pyproject.toml`. CI owns it.
