@@ -1,11 +1,16 @@
 import pickle
 from functools import cache
 from pathlib import Path
-from typing import Final, Self, TypedDict
+from typing import Final, Self, TypedDict, cast
 
 from tax_identifiers.metadata import TaxIdentifierMetadata
+from tax_identifiers.us.enums import USState
 from tax_identifiers.us.fields import USStateField
 from tax_identifiers.us.tax_identifiers import clean_us_tax_identifier
+from tax_identifiers.us.transformers import transform_us_state
+
+STATIC_DIR: Final[Path] = Path(__file__).resolve().parent / "static"
+SSN_ALLOCATION_FILE: Final[Path] = STATIC_DIR / "ssn_allocation.pkl"
 
 
 class SSNAllocationEntry(TypedDict):
@@ -13,10 +18,6 @@ class SSNAllocationEntry(TypedDict):
 
     state: str
     groups: dict[str, str]
-
-
-STATIC_DIR: Final[Path] = Path(__file__).resolve().parent / "static"
-SSN_ALLOCATION_FILE: Final[Path] = STATIC_DIR / "ssn_allocation.pkl"
 
 
 @cache
@@ -29,12 +30,14 @@ def get_ssn_allocation_data() -> dict[str, SSNAllocationEntry]:
     except FileNotFoundError as exc:
         raise RuntimeError(f"SSN allocation dataset file not found: {SSN_ALLOCATION_FILE}") from exc
     except pickle.UnpicklingError as exc:
-        raise RuntimeError(f"SSN allocation dataset is not a valid pickle: {SSN_ALLOCATION_FILE}") from exc
+        raise RuntimeError(
+            f"SSN allocation dataset is not a valid pickle: {SSN_ALLOCATION_FILE}"
+        ) from exc
 
     if not isinstance(payload, dict) or not payload:
         raise ValueError("SSN allocation dataset must be a non-empty mapping.")
 
-    return payload
+    return cast("dict[str, SSNAllocationEntry]", payload)
 
 
 class SSNValidation(TaxIdentifierMetadata):
@@ -60,7 +63,7 @@ class SSNValidation(TaxIdentifierMetadata):
         return cls(issued_state=issued_state, issued_years=issued_years)
 
     @staticmethod
-    def lookup_allocation(normalized: str) -> tuple[str | None, str | None]:
+    def lookup_allocation(normalized: str) -> tuple[USState | None, str | None]:
         """Look up issuing state and issued years from the SSN allocation dataset."""
 
         area_number = normalized[:3]
@@ -70,4 +73,4 @@ class SSNValidation(TaxIdentifierMetadata):
         if allocation is None:
             return None, None
 
-        return allocation["state"], allocation["groups"].get(group_number)
+        return transform_us_state(allocation["state"]), allocation["groups"].get(group_number)

@@ -24,8 +24,8 @@ class CountryTaxRules(ABC):
         """Return the canonical, comparison-ready form of a tax identifier."""
 
     @abstractmethod
-    def is_valid(self, tax_id: str, tax_id_type: TaxIdentifierType) -> bool:
-        """Return whether a normalized tax identifier passes structural checks."""
+    def is_valid(self, tax_id: str, tax_id_type: TaxIdentifierType) -> bool | None:
+        """Return whether a tax identifier passes structural checks, or None when undecidable."""
 
     @abstractmethod
     def resolve_metadata(

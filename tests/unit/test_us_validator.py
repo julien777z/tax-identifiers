@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 import pytest
 
 from tax_identifiers import (
@@ -11,11 +9,12 @@ from tax_identifiers import (
     UnsupportedTaxIdTypeError,
     UsTaxRules,
 )
-from tests.conftest import AllocatedSsn
+from tests.factories import generate_tax_id
+from tests.models import AllocatedSsn
 
 
 class TestUsTaxValidatorCountry:
-    """Tests for the validator's country identity."""
+    """Test that the validator reports its country."""
 
     def test_reports_united_states(self, us_validator: TaxValidator) -> None:
         """Test that the US validator reports the United States."""
@@ -24,16 +23,17 @@ class TestUsTaxValidatorCountry:
 
 
 class TestUsTaxValidatorValidate:
-    """Tests for validating US tax identifiers."""
+    """Test that US tax identifiers are validated."""
 
     def test_returns_resolution_for_valid_ssn(
         self,
         us_validator: TaxValidator,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that a valid SSN returns a summary with resolved details."""
 
-        result = us_validator.validate(tax_id_factory(TaxIdentifierType.SSN), TaxIdentifierType.SSN)
+        result = us_validator.validate(
+            generate_tax_id(TaxIdentifierType.SSN), TaxIdentifierType.SSN
+        )
 
         assert result.valid is True
         assert result.metadata is not None
@@ -61,17 +61,16 @@ class TestUsTaxValidatorValidate:
     def test_rejects_unsupported_types(
         self,
         us_validator: TaxValidator,
-        tax_id_factory: Callable[..., str],
         tax_id_type: TaxIdentifierType,
     ) -> None:
         """Test that a non-US identifier type is rejected."""
 
         with pytest.raises(UnsupportedTaxIdTypeError):
-            us_validator.validate(tax_id_factory(TaxIdentifierType.SSN), tax_id_type)
+            us_validator.validate(generate_tax_id(TaxIdentifierType.SSN), tax_id_type)
 
 
 class TestUsTaxRulesResolveMetadata:
-    """Tests for resolving SSN metadata through US rules."""
+    """Test that SSN metadata resolves through the US rules."""
 
     def test_resolves_known_ssn(self, allocated_ssn: AllocatedSsn) -> None:
         """Test that a known SSN resolves to issuing details."""

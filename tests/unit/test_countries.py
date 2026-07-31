@@ -1,17 +1,15 @@
 import pytest
 from pydantic import ValidationError
 
-from tax_identifiers import BaseModel, Country, UnknownCountryError
-
-
-class CountryHolder(BaseModel):
-    """Test model with a single country field."""
-
-    country: Country
+from tax_identifiers import (
+    Country,
+    UnknownCountryError,
+)
+from tests.models import CountryRecord
 
 
 class TestCountryFromString:
-    """Tests for normalizing country strings to Country members."""
+    """Test that country strings normalize to Country members."""
 
     @pytest.mark.parametrize(
         "value",
@@ -62,7 +60,7 @@ class TestCountryFromString:
 
 
 class TestCountryFieldCoercion:
-    """Tests for coercing raw country strings on model fields."""
+    """Test that raw country strings coerce on model fields."""
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -77,10 +75,10 @@ class TestCountryFieldCoercion:
     def test_coerces_raw_country_strings(self, value: str, expected: Country) -> None:
         """Test that a country field accepts raw strings such as DB column values."""
 
-        assert CountryHolder(country=value).country == expected
+        assert CountryRecord(country=value).country == expected
 
     def test_rejects_unknown_country_string(self) -> None:
         """Test that an unresolvable country string fails field validation."""
 
         with pytest.raises(ValidationError):
-            CountryHolder(country="Notacountry")
+            CountryRecord(country="Notacountry")

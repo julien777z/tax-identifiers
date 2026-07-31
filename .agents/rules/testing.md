@@ -38,6 +38,20 @@ alwaysApply: true
 - Do not create module-level helper factories inside test files for reusable objects. This includes the first invocation — even a one-off "I'll just put it here for now" builder belongs in `conftest.py` from day one.
 - Follow the canonical factory shape: a `@pytest.fixture` named `<noun>_*_factory` (for example `order_factory`, `customer_factory`, `payment_payload_factory`, `task_factory`) that returns an inner `_build(**overrides) -> Noun` closure. Use the `*_orm_factory` suffix specifically for SQLAlchemy ORM rows.
 - When a shared factory class exists, wrap it in a `*_factory` fixture and use that fixture in tests; do not call the class directly from test modules.
+- **Test modules never call `.build()` on a factory class.** `SomeFactory.build(...)` in a test file bypasses the fixture layer, so the factory cannot be overridden per suite and every call site has to be edited when the factory moves. Request the `*_factory` fixture and call it: `some_factory(field=value)`.
+- The fixture returns the factory's `build` (or a closure over it) so a test reads `order_factory()` / `order_factory(status=...)`, never `OrderFactory.build(...)`.
+
+```python
+# Bad: a test module reaching for the factory class
+def test_masks_all_but_last_four() -> None:
+    payer = SsnTaxPayerFactory.build()
+
+
+# Good: the shared fixture supplies it
+def test_masks_all_but_last_four(ssn_tax_payer_factory) -> None:
+    payer = ssn_tax_payer_factory()
+```
+
 - Put shared factories in `conftest.py` and prefer `@pytest.fixture` for setup.
 - Helper functions that appear in multiple test files must be extracted to the nearest shared `conftest.py` or a `utils.py` in the test service folder.
 - When multiple tests in a suite need the same config overrides, expose a reusable fixture helper (for example, `mock_config` returning `_mock_config(**overrides)`) in `conftest.py` instead of repeating `monkeypatch.setattr(...)` in each test.

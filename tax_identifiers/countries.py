@@ -8,9 +8,6 @@ from tax_identifiers.normalization import collapse_whitespace
 def normalize_country_code(value: str) -> str:
     """Normalize a country code or name to a Country member's alpha-2 code."""
 
-    if not isinstance(value, str):
-        raise UnknownCountryError("Country must be a string")
-
     normalized = collapse_whitespace(value)
 
     if not normalized:
@@ -297,4 +294,4 @@ class Country(BaseEnum):
         if not isinstance(value, str):
             return None
 
-        return cls._value2member_map_.get(normalize_country_code(value))
+        return cls.__members__.get(normalize_country_code(value))

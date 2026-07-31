@@ -4,11 +4,11 @@ import pytest
 
 from tax_identifiers import SSNValidation
 from tax_identifiers.us.metadata import STATIC_DIR, SSNAllocationEntry, get_ssn_allocation_data
-from tests.conftest import AllocatedSsn
+from tests.models import AllocatedSsn
 
 
 class TestSSNValidationFromTaxIdentifier:
-    """Tests for resolving SSN allocation details."""
+    """Test that SSN allocation details are resolved."""
 
     def test_resolves_known_area_and_group(self, allocated_ssn: AllocatedSsn) -> None:
         """Test that a known area and group resolve to issuing state and years."""
@@ -42,7 +42,7 @@ class TestSSNValidationFromTaxIdentifier:
 
 
 class TestSSNAllocationDataset:
-    """Tests for the shipped SSN allocation dataset."""
+    """Test that the shipped SSN allocation dataset loads and resolves."""
 
     def test_pickle_matches_json_source(self) -> None:
         """Test that the loaded pickle matches the JSON source of truth."""

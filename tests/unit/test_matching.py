@@ -1,15 +1,14 @@
-import asyncio
-from collections.abc import Callable
-
 import pytest
 
 from tax_identifiers import TaxIdentifierType, match_us_tin
-
-FULL_NAME = "Jane Q Contractor"
+from tests.factories import (
+    generate_full_name,
+    generate_tax_id,
+)
 
 
 class TestMatchUsTin:
-    """Tests for the US TIN match stub."""
+    """Test that US TIN matching reports it is not implemented."""
 
     @pytest.mark.parametrize(
         "tax_id_type",
@@ -20,18 +19,15 @@ class TestMatchUsTin:
         ],
         ids=["ssn", "ein", "itin"],
     )
-    def test_raises_not_implemented(
+    async def test_raises_not_implemented(
         self,
         tax_id_type: TaxIdentifierType,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that US TIN matching is not implemented yet and raises NotImplementedError."""
 
         with pytest.raises(NotImplementedError):
-            asyncio.run(
-                match_us_tin(
-                    full_name=FULL_NAME,
-                    tax_id=tax_id_factory(tax_id_type),
-                    tax_id_type=tax_id_type,
-                )
+            await match_us_tin(
+                full_name=generate_full_name(),
+                tax_id=generate_tax_id(tax_id_type),
+                tax_id_type=tax_id_type,
             )

@@ -1,22 +1,22 @@
-from collections.abc import Callable
-
 import pytest
 
 from tax_identifiers import (
     TaxIdentifierOrigin,
     TaxIdentifierType,
     TinType,
-    build_string_normalizer,
+    format_us_ssn,
+)
+from tax_identifiers.normalization import (
     collapse_whitespace,
     empty_str_to_none,
-    format_us_ssn,
     transform_required_string,
-    transform_tax_identifier,
 )
+from tax_identifiers.us.transformers import transform_tax_identifier
+from tests.factories import generate_tax_id
 
 
 class TestCollapseWhitespace:
-    """Tests for whitespace collapsing."""
+    """Test that whitespace is collapsed."""
 
     def test_collapses_internal_and_edge_whitespace(self) -> None:
         """Test that runs of whitespace collapse to single spaces and trim."""
@@ -25,7 +25,7 @@ class TestCollapseWhitespace:
 
 
 class TestTransformRequiredString:
-    """Tests for required-string normalization."""
+    """Test that required strings are normalized and empties rejected."""
 
     @pytest.mark.parametrize("value", [None, "", "   "], ids=["none", "empty", "whitespace"])
     def test_rejects_empty_values(self, value: str | None) -> None:
@@ -35,40 +35,8 @@ class TestTransformRequiredString:
             transform_required_string(value)
 
 
-class TestBuildStringNormalizer:
-    """Tests for the composable string normalizer."""
-
-    @pytest.mark.parametrize(
-        ("options", "value", "expected"),
-        [
-            ({"normalize_to_lowercase": True}, "ABC", "abc"),
-            ({"normalize_to_titlecase": True}, "john doe", "John Doe"),
-            ({"strip_non_digits": True}, "a1b2", "12"),
-            ({"strip_trailing_punctuation": True}, "ave. st,", "ave st"),
-        ],
-        ids=["lowercase", "titlecase", "strip_non_digits", "strip_trailing_punctuation"],
-    )
-    def test_applies_selected_options(
-        self,
-        options: dict[str, bool],
-        value: str,
-        expected: str,
-    ) -> None:
-        """Test that the normalizer applies the configured transformations."""
-
-        normalizer = build_string_normalizer(**options)
-
-        assert normalizer(value) == expected
-
-    def test_rejects_conflicting_case_options(self) -> None:
-        """Test that setting more than one case option raises a ValueError."""
-
-        with pytest.raises(ValueError):
-            build_string_normalizer(normalize_to_uppercase=True, normalize_to_lowercase=True)
-
-
 class TestEmptyStrToNone:
-    """Tests for empty-string to None conversion."""
+    """Test that empty strings convert to None."""
 
     def test_converts_blank_strings(self) -> None:
         """Test that blank string values become None while others are preserved."""
@@ -87,14 +55,16 @@ class TestEmptyStrToNone:
 
 
 class TestTransformTaxIdentifier:
-    """Tests for origin-aware tax identifier normalization."""
+    """Test that tax identifier normalization respects the origin."""
 
-    def test_cleans_us_identifier_to_digits(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_cleans_us_identifier_to_digits(self) -> None:
         """Test that a US identifier normalizes to nine bare digits."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
-        result = transform_tax_identifier(format_us_ssn(raw_tax_id), origin=TaxIdentifierOrigin.US_TIN)
+        result = transform_tax_identifier(
+            format_us_ssn(raw_tax_id), origin=TaxIdentifierOrigin.US_TIN
+        )
 
         assert result == raw_tax_id
 
@@ -118,11 +88,10 @@ class TestTransformTaxIdentifier:
 
     def test_foreign_origin_with_ssn_subtype_is_cleaned(
         self,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that an SSN subtype forces US cleaning even for foreign origin."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         result = transform_tax_identifier(
             format_us_ssn(raw_tax_id),

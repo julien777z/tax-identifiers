@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # Overrides the shared action's single default: a published library must be
+      # proven across the whole [project.requires-python] range.
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
 
@@ -26,3 +28,19 @@ jobs:
 
       - name: Test with Pytest
         run: poetry run pytest --cov=tax_identifiers --cov-report=term-missing
+
+  types:
+    name: Static Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
+        with:
+          post_setup_command: "poetry install --all-extras"
+
+      - name: Type check with Pyright
+        run: poetry run pyright

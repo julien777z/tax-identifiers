@@ -1,6 +1,10 @@
 from tax_identifiers.countries import Country
 from tax_identifiers.enums import TaxIdentifierType
-from tax_identifiers.exceptions import InvalidTaxIdError, UnsupportedTaxIdTypeError
+from tax_identifiers.exceptions import (
+    INVALID_TAX_ID_MESSAGE,
+    InvalidTaxIdError,
+    UnsupportedTaxIdTypeError,
+)
 from tax_identifiers.models import TaxValidationResult
 from tax_identifiers.rules import get_country_rules
 
@@ -32,6 +36,8 @@ class TaxValidator:
         )
 
         if result is None:
-            raise InvalidTaxIdError(f"{tax_id_type} value is not a valid {self.country} tax identifier")
+            raise InvalidTaxIdError(
+                INVALID_TAX_ID_MESSAGE.format(tax_id_type=tax_id_type, country=self.country)
+            )
 
         return result

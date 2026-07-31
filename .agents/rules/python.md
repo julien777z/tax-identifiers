@@ -82,6 +82,9 @@ class Report(BaseModel):
 - Never create shim modules that only re-export symbols from another package for backwards compatibility; update all consumers to import from the canonical source instead.
 - Place generic, stateless, cross-cutting helpers in a `utils.py` module or `utils/` package.
 - Use a `utils.py` module for a small cohesive set of utilities; use a `utils/` package when separate focused utility modules are warranted.
+- Never use a `*_utils.py` module-name suffix (no `datetime_utils.py`); name the module by its topic inside `utils/`.
+- Give a `utils/` package topic-named modules (for example `utils/datetime.py`, `utils/pagination.py`) rather than one flat module.
+- A `utils/__init__.py` stays empty or imports + `__all__` only; consumers import from the specific submodule.
 - Keep domain and orchestration behavior in their owning modules. Do not use utilities as a dumping ground.
 - Narrow exception: `__main__.py` entrypoints may use same-package relative imports for bootstrap (for example `from .runtime import main`), and `__init__.py` may use explicit relative imports when assembling the package’s public surface.
 
@@ -427,6 +430,7 @@ except Exception as exc:
 - Banned terms and what to use instead:
   - **"best effort"** — state the real contract. A function that swallows failures and reports the outcome should say so: name it `try_<verb>` (for example `try_send_email`) and document it as "returning whether it succeeded", not "best-effort".
   - **"seed" / "seeds" / "seeding"** (for test data or sample records) — name the helper for what it builds: a `<noun>_*_factory` fixture, `create_*`, or "sample data". Do not call setup data a "seed".
+  - **"holder"** (for a model or object that carries a field under test) — name it for the thing it models, not for the fact that it holds something: `SsnTaxPayer`, `StateRecord`, `TaxIdAliasSet`. A name ending in "Holder" says nothing a reader can use.
 - If you reach for a placeholder-ish term a future reader could not decode from the name alone, pick a more intuitive name instead of adding it to this list.
 
 - Add a blank line after each docstring.

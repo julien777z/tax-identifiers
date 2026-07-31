@@ -36,11 +36,11 @@ class GenericTaxRules(CountryTaxRules):
 
         return collapse_whitespace(tax_id).upper()
 
-    def is_valid(self, tax_id: str, tax_id_type: TaxIdentifierType) -> bool:
-        """Accept any non-empty identifier for the unknown country; raise for named countries."""
+    def is_valid(self, tax_id: str, tax_id_type: TaxIdentifierType) -> bool | None:
+        """Accept any non-empty identifier for the unknown country; decide nothing for named ones."""
 
         if self._country is not Country.UNKNOWN:
-            raise NotImplementedError(f"No tax identifier validation rules for {self._country}")
+            return None
 
         return bool(tax_id)
 

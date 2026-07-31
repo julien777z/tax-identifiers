@@ -1,101 +1,53 @@
 from collections.abc import Callable
+from typing import Annotated, Final
 
 import pytest
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from tax_identifiers import (
-    BaseModel,
     ComparableUsTaxIdentifier,
     Country,
-    NormalizedString,
-    StringBool,
+    SSNTaxIdField,
+    TaxIdFieldOptions,
+    TaxIdStr,
     TaxIdentifierType,
-    TaxIdField,
-    USState,
-    USStateField,
+    UnsupportedTaxIdTypeError,
+    USTaxIdField,
     format_us_ssn,
     is_masked_tax_id,
-    mask_tax_id,
+)
+from tax_identifiers.base import BaseModel
+from tax_identifiers.us.enums import USState
+from tests.factories import (
+    generate_masked_tax_id,
+    generate_tax_id,
+)
+from tests.models import (
+    LenientSsnTaxPayer,
+    MaskedTaxIdAliasSet,
+    SsnTaxPayer,
+    StateRecord,
+    TaxIdAliasSet,
 )
 
-
-def is_affirmative(value: str) -> bool:
-    """Return whether a string token is an affirmative answer."""
-
-    return value.strip().upper() in {"YES", "Y", "TRUE"}
-
-
-class NormalizedHolder(BaseModel):
-    """Test model with an uppercase-normalized string field."""
-
-    value: NormalizedString(normalize_to_uppercase=True)
-
-
-class ConsentHolder(BaseModel):
-    """Test model with a string-backed boolean field."""
-
-    consented: StringBool(predicate=is_affirmative)
-
-
-class StateHolder(BaseModel):
-    """Test model with a US state field."""
-
-    state: USStateField
-
-
-class UsTaxIdHolder(BaseModel):
-    """Test model with a US tax identifier field."""
-
-    tax_id: TaxIdField(country=Country.US)
-
-
-class MaskedTaxIdHolder(BaseModel):
-    """Test model accepting a masked US tax identifier."""
-
-    tax_id: TaxIdField(country=Country.US, allow_masked=True)
-
-
-class UnknownTaxIdHolder(BaseModel):
-    """Test model with a country-agnostic tax identifier field."""
-
-    tax_id: TaxIdField(country=Country.UNKNOWN)
-
-
-class DefaultTaxIdHolder(BaseModel):
-    """Test model relying on the default (unknown) country for the tax identifier field."""
-
-    tax_id: TaxIdField()
-
-
-class TestNormalizedString:
-    """Tests for the configurable string normalizer field."""
-
-    def test_uppercases_and_collapses_whitespace(self) -> None:
-        """Test that the value is uppercased and internal whitespace is collapsed."""
-
-        holder = NormalizedHolder(value="  acme   llc ")
-
-        assert holder.value == "ACME LLC"
-
-
-class TestStringBool:
-    """Tests for the predicate-backed boolean field."""
-
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [("yes", True), ("no", False), (True, True)],
-        ids=["affirmative", "negative", "bool_passthrough"],
-    )
-    def test_converts_via_predicate(self, value: bool | str, expected: bool) -> None:
-        """Test that string inputs are converted through the predicate."""
-
-        holder = ConsentHolder(consented=value)
-
-        assert holder.consented is expected
+RESERVED_SSN_SEGMENTS: Final[list[dict[str, str]]] = [
+    {"area": "000"},
+    {"area": "666"},
+    {"area": "900"},
+    {"group": "00"},
+    {"serial": "0000"},
+]
+RESERVED_SSN_SEGMENT_IDS: Final[list[str]] = [
+    "zero_area",
+    "reserved_area",
+    "high_area",
+    "zero_group",
+    "zero_serial",
+]
 
 
 class TestUSStateField:
-    """Tests for US state coercion."""
+    """Test that US states coerce from codes and names."""
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -105,72 +57,247 @@ class TestUSStateField:
     def test_coerces_codes_and_names(self, value: str, expected: USState) -> None:
         """Test that postal codes and full names coerce to the enum."""
 
-        holder = StateHolder(state=value)
+        record = StateRecord(state=value)
 
-        assert holder.state == expected
+        assert record.state == expected
 
     def test_rejects_unknown_state(self) -> None:
         """Test that an unknown state raises a validation error."""
 
         with pytest.raises(ValidationError):
-            StateHolder(state="Atlantis")
+            StateRecord(state="Atlantis")
 
 
 class TestTaxIdField:
-    """Tests for the tax identifier field annotation."""
+    """Test that the tax identifier field annotation normalizes and rejects input."""
 
-    def test_normalizes_us_identifier(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_normalizes_us_identifier(
+        self, tax_id_alias_set_factory: Callable[..., TaxIdAliasSet]
+    ) -> None:
         """Test that a US identifier is stored as a formatting-insensitive value."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
-        holder = UsTaxIdHolder(tax_id=format_us_ssn(raw_tax_id))
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
+        aliases = tax_id_alias_set_factory(us=format_us_ssn(raw_tax_id))
 
-        assert isinstance(holder.tax_id, ComparableUsTaxIdentifier)
-        assert holder.tax_id == raw_tax_id
+        assert isinstance(aliases.us, ComparableUsTaxIdentifier)
+        assert aliases.us == raw_tax_id
 
-    def test_rejects_masked_value_by_default(self) -> None:
+    def test_rejects_masked_value_by_default(
+        self, tax_id_alias_set_factory: Callable[..., TaxIdAliasSet]
+    ) -> None:
         """Test that a masked tax identifier is rejected unless masking is allowed."""
 
         with pytest.raises(ValidationError, match="Tax ID cannot contain mask characters"):
-            UsTaxIdHolder(tax_id=mask_tax_id("123456789"))
+            tax_id_alias_set_factory(us=generate_masked_tax_id())
 
-    def test_rejects_non_string_value(self) -> None:
+    def test_rejects_non_string_value(
+        self, tax_id_alias_set_factory: Callable[..., TaxIdAliasSet]
+    ) -> None:
         """Test that a non-string tax identifier is rejected without a type error."""
 
         with pytest.raises(ValidationError):
-            UsTaxIdHolder(tax_id=123456789)
+            tax_id_alias_set_factory(us=int(generate_tax_id(TaxIdentifierType.SSN)))
 
-    def test_accepts_masked_value_when_configured(self) -> None:
+    @pytest.mark.parametrize(
+        "field_name",
+        ["ssn", "us", "foreign", "unknown"],
+        ids=["ssn", "us_unspecified", "foreign", "unknown"],
+    )
+    def test_every_alias_rejects_masked_input_without_the_marker(
+        self,
+        field_name: str,
+        tax_id_alias_set_factory: Callable[..., TaxIdAliasSet],
+    ) -> None:
+        """Test that rejecting a masked value is the default every alias keeps on its own."""
+
+        with pytest.raises(ValidationError, match="Tax ID cannot contain mask characters"):
+            tax_id_alias_set_factory(**{field_name: generate_masked_tax_id()})
+
+    @pytest.mark.parametrize("plain", [False, True], ids=["maskable_type", "plain_string"])
+    def test_accepts_masked_value_when_configured(
+        self,
+        plain: bool,
+        masked_tax_id_alias_set_factory: Callable[..., MaskedTaxIdAliasSet],
+    ) -> None:
         """Test that a masked tax identifier passes through when masking is allowed."""
 
-        masked = mask_tax_id("123456789")
-        holder = MaskedTaxIdHolder(tax_id=masked)
+        masked = generate_masked_tax_id(plain=plain)
+        masked_aliases = masked_tax_id_alias_set_factory(us=masked)
 
-        assert holder.tax_id == masked
-        assert is_masked_tax_id(holder.tax_id)
-
-    def test_accepts_plain_masked_string_when_configured(self) -> None:
-        """Test that a plain masked string from a serialized payload is accepted."""
-
-        holder = MaskedTaxIdHolder(tax_id="*****6789")
-
-        assert holder.tax_id == "*****6789"
-        assert is_masked_tax_id(holder.tax_id)
+        assert masked_aliases.us == masked
+        assert is_masked_tax_id(masked_aliases.us)
 
 
 class TestUnknownCountryTaxIdField:
-    """Tests for the country-agnostic (unknown) tax identifier field."""
+    """Test that the country-agnostic field normalizes without country rules."""
 
-    def test_normalizes_generically(self) -> None:
+    def test_normalizes_generically(
+        self,
+        normalizable_foreign_tax_id: tuple[str, str],
+        tax_id_alias_set_factory: Callable[..., TaxIdAliasSet],
+    ) -> None:
         """Test that an unknown-country field uppercases without US cleaning."""
 
-        holder = UnknownTaxIdHolder(tax_id="  fr-12 ab ")
+        raw, normalized = normalizable_foreign_tax_id
 
-        assert holder.tax_id == "FR-12 AB"
+        assert tax_id_alias_set_factory(unknown=raw).unknown == normalized
 
-    def test_defaults_to_unknown_country(self) -> None:
-        """Test that the tax identifier field defaults to the unknown country."""
 
-        holder = DefaultTaxIdHolder(tax_id=" ab-12 ")
+class TestInlineTaxIdFieldOptions:
+    """Test that a tax identifier field configured inline matches a shipped alias."""
 
-        assert holder.tax_id == "AB-12"
+    def test_matches_the_equivalent_alias(self) -> None:
+        """Test that an inline annotation behaves identically to the matching alias."""
+
+        formatted = format_us_ssn(generate_tax_id(TaxIdentifierType.SSN))
+        inline_adapter: TypeAdapter[str] = TypeAdapter(
+            Annotated[
+                TaxIdStr,
+                TaxIdFieldOptions(country=Country.US, tax_id_type=TaxIdentifierType.US_UNSPECIFIED),
+            ]
+        )
+        aliased_adapter: TypeAdapter[str] = TypeAdapter(USTaxIdField)
+
+        inline = inline_adapter.validate_python(formatted)
+        aliased = aliased_adapter.validate_python(formatted)
+
+        assert inline == aliased
+        assert type(inline) is type(aliased)
+
+
+class TestMixinNormalizationEquivalence:
+    """Test that the masking mixin does not change how a tax identifier field normalizes."""
+
+    def test_stored_value_matches_the_bare_annotation(self) -> None:
+        """Test that a mixin-bearing SSN field stores exactly what its annotation produces."""
+
+        formatted = format_us_ssn(generate_tax_id(TaxIdentifierType.SSN))
+        annotation_adapter: TypeAdapter[str] = TypeAdapter(SSNTaxIdField)
+
+        mixin_value = SsnTaxPayer(tax_id=formatted).tax_id
+        annotation_value = annotation_adapter.validate_python(formatted)
+
+        assert mixin_value == annotation_value
+        assert type(mixin_value) is type(annotation_value)
+
+
+class TestTaxIdFieldOptions:
+    """Test that annotation metadata defaults to the country-agnostic contract."""
+
+    def test_defaults_to_the_country_agnostic_contract(self) -> None:
+        """Test that options default to the unknown country and its country-agnostic type."""
+
+        options = TaxIdFieldOptions()
+
+        assert options.country is Country.UNKNOWN
+        assert options.tax_id_type is TaxIdentifierType.NONE
+        assert options.assert_validity
+
+
+class TestUnsupportedTaxIdTypeDeclaration:
+    """Test that a field declared with a type its country does not handle is rejected."""
+
+    @pytest.mark.parametrize(
+        ("country", "tax_id_type"),
+        [
+            (Country.US, TaxIdentifierType.NONE),
+            (Country.US, TaxIdentifierType.FOREIGN_TIN),
+            (Country.UNKNOWN, TaxIdentifierType.SSN),
+            (Country.FR, TaxIdentifierType.US_UNSPECIFIED),
+        ],
+        ids=["us_none", "us_foreign", "unknown_ssn", "named_us_unspecified"],
+    )
+    def test_rejects_a_pair_the_country_does_not_handle(
+        self, country: Country, tax_id_type: TaxIdentifierType
+    ) -> None:
+        """Test that declaring an unsupported country and type pair fails when the schema is built."""
+
+        with pytest.raises(UnsupportedTaxIdTypeError):
+            TypeAdapter(
+                Annotated[TaxIdStr, TaxIdFieldOptions(country=country, tax_id_type=tax_id_type)]
+            )
+
+
+class TestSsnStructuralValidation:
+    """Test that the SSN field rejects identifiers its country's rules find invalid."""
+
+    @pytest.mark.parametrize(
+        ("payer_model", "rejects"),
+        [(SsnTaxPayer, True), (LenientSsnTaxPayer, False)],
+        ids=["strict", "lenient"],
+    )
+    @pytest.mark.parametrize("segments", RESERVED_SSN_SEGMENTS, ids=RESERVED_SSN_SEGMENT_IDS)
+    def test_reserved_identifiers_are_rejected_only_when_validity_is_asserted(
+        self,
+        segments: dict[str, str],
+        payer_model: type[SsnTaxPayer] | type[LenientSsnTaxPayer],
+        rejects: bool,
+    ) -> None:
+        """Test that each reserved SSN segment is rejected by the strict field and kept by the lenient one."""
+
+        reserved = generate_tax_id(TaxIdentifierType.SSN, **segments)
+
+        if rejects:
+            with pytest.raises(ValidationError, match="is not a valid"):
+                payer_model(tax_id=reserved)
+        else:
+            assert payer_model(tax_id=reserved).tax_id == reserved
+
+    @pytest.mark.parametrize(
+        "payer_model",
+        [SsnTaxPayer, LenientSsnTaxPayer],
+        ids=["strict", "lenient"],
+    )
+    def test_normalizes_a_structurally_valid_identifier(
+        self,
+        payer_model: type[SsnTaxPayer] | type[LenientSsnTaxPayer],
+    ) -> None:
+        """Test that both fields normalize a valid SSN the same way."""
+
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
+
+        assert payer_model(tax_id=format_us_ssn(raw_tax_id)).tax_id == raw_tax_id
+
+    def test_lenient_field_still_declares_the_ssn_type(self) -> None:
+        """Test that the lenient field keeps the country and type metadata it was declared with."""
+
+        record = LenientSsnTaxPayer(tax_id=generate_tax_id(TaxIdentifierType.SSN, area="666"))
+        options = record.tax_id_field_options("tax_id")
+
+        assert options is not None
+        assert options.country is Country.US
+        assert options.tax_id_type is TaxIdentifierType.SSN
+
+
+class TestPermissiveTaxIdFields:
+    """Test that fields whose rules cannot assert validity keep accepting their input."""
+
+    @pytest.mark.parametrize(
+        "field_name",
+        ["us", "foreign", "unknown"],
+        ids=["us_unspecified", "foreign", "unknown"],
+    )
+    def test_accepts_values_the_ssn_field_rejects(
+        self,
+        field_name: str,
+        tax_id_alias_set_factory: Callable[..., TaxIdAliasSet],
+    ) -> None:
+        """Test that a value reserved for SSNs still passes fields without SSN rules."""
+
+        reserved = generate_tax_id(TaxIdentifierType.SSN, area="666")
+        aliases = tax_id_alias_set_factory(**{field_name: reserved})
+
+        assert getattr(aliases, field_name) == reserved
+
+    def test_named_country_without_rules_is_accepted(self) -> None:
+        """Test that a country with no dedicated rules does not fail validation."""
+
+        class FrenchTaxPayer(BaseModel):
+            """Test model with a French foreign-TIN field."""
+
+            tax_id: Annotated[
+                TaxIdStr,
+                TaxIdFieldOptions(country=Country.FR, tax_id_type=TaxIdentifierType.FOREIGN_TIN),
+            ]
+
+        assert FrenchTaxPayer(tax_id=" fr-123 ").tax_id == "FR-123"

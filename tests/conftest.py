@@ -1,36 +1,28 @@
-import random
 from collections.abc import Callable
 
 import pytest
 
-from tax_identifiers import (
-    BaseModel,
-    Country,
-    TaxIdentifier,
-    TaxIdentifierPairMixin,
-    TaxIdentifierType,
-    TaxIdField,
-    TaxValidator,
-    USState,
-)
+from tax_identifiers import Country, TaxIdentifier, TaxValidator
 from tax_identifiers.us import metadata as us_metadata
+from tax_identifiers.us.enums import USState
 from tax_identifiers.us.metadata import SSNAllocationEntry
-
-FOREIGN_TAX_ID_PREFIX = "GB"
-
-
-class TaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
-    """Test model exposing a single maskable US tax identifier field."""
-
-    tax_id: TaxIdField(country=Country.US, tax_id_type=TaxIdentifierType.SSN)
-
-
-class AllocatedSsn(BaseModel):
-    """A structurally valid SSN paired with the allocation metadata it resolves to."""
-
-    tax_id: str
-    issued_state: USState
-    issued_years: str
+from tests.factories import (
+    FOREIGN_TAX_ID_PREFIX,
+    LenientSsnTaxPayerFactory,
+    MaskedTaxIdAliasSetFactory,
+    SsnTaxPayerFactory,
+    TaxIdAliasSetFactory,
+    TaxIdentifierFactory,
+    UntaxedPartyFactory,
+)
+from tests.models import (
+    AllocatedSsn,
+    LenientSsnTaxPayer,
+    MaskedTaxIdAliasSet,
+    SsnTaxPayer,
+    TaxIdAliasSet,
+    UntaxedParty,
+)
 
 
 @pytest.fixture
@@ -41,50 +33,12 @@ def us_validator() -> TaxValidator:
 
 
 @pytest.fixture
-def tax_id_factory() -> Callable[..., str]:
-    """Build random, structurally valid tax identifiers for the requested type."""
+def normalizable_foreign_tax_id() -> tuple[str, str]:
+    """Provide a raw foreign tax identifier paired with its normalized form."""
 
-    def _build(tax_id_type: TaxIdentifierType = TaxIdentifierType.SSN) -> str:
-        if tax_id_type == TaxIdentifierType.FOREIGN_TIN:
-            return f"{FOREIGN_TAX_ID_PREFIX}{random.randint(0, 99_999_999):08d}"
+    raw = f" {FOREIGN_TAX_ID_PREFIX.lower()}-12 ab "
 
-        area = random.choice([*range(1, 666), *range(667, 900)])
-        group = random.randint(1, 99)
-        serial = random.randint(1, 9999)
-
-        return f"{area:03d}{group:02d}{serial:04d}"
-
-    return _build
-
-
-@pytest.fixture
-def tax_identifier_factory(
-    tax_id_factory: Callable[..., str],
-) -> Callable[..., TaxIdentifier]:
-    """Build TaxIdentifier instances with generated, type-appropriate identifiers."""
-
-    def _build(
-        tax_id_type: TaxIdentifierType = TaxIdentifierType.SSN,
-        tax_id: str | None = None,
-        country: Country = Country.US,
-    ) -> TaxIdentifier:
-        resolved_tax_id = tax_id if tax_id is not None else tax_id_factory(tax_id_type)
-
-        return TaxIdentifier(country=country, tax_id_type=tax_id_type, tax_id=resolved_tax_id)
-
-    return _build
-
-
-@pytest.fixture
-def tax_identifier_holder_factory(
-    tax_id_factory: Callable[..., str],
-) -> Callable[..., TaxIdentifierHolder]:
-    """Build TaxIdentifierHolder instances with a generated SSN."""
-
-    def _build(**overrides) -> TaxIdentifierHolder:
-        return TaxIdentifierHolder(**{"tax_id": tax_id_factory(TaxIdentifierType.SSN), **overrides})
-
-    return _build
+    return raw, raw.strip().upper()
 
 
 @pytest.fixture
@@ -102,7 +56,7 @@ def ssn_allocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, SSNAllocationEn
 
 @pytest.fixture
 def allocated_ssn(ssn_allocation: dict[str, SSNAllocationEntry]) -> AllocatedSsn:
-    """Provide a structurally valid SSN for a known allocation entry with its expected state and years."""
+    """Provide a valid SSN for a known allocation entry with its expected metadata."""
 
     area = next(iter(ssn_allocation))
     entry = ssn_allocation[area]
@@ -113,3 +67,45 @@ def allocated_ssn(ssn_allocation: dict[str, SSNAllocationEntry]) -> AllocatedSsn
         issued_state=USState(entry["state"]),
         issued_years=years,
     )
+
+
+@pytest.fixture
+def tax_identifier_factory() -> Callable[..., TaxIdentifier]:
+    """Build TaxIdentifier models."""
+
+    return TaxIdentifierFactory.build
+
+
+@pytest.fixture
+def ssn_tax_payer_factory() -> Callable[..., SsnTaxPayer]:
+    """Build tax payers whose SSN field asserts validity."""
+
+    return SsnTaxPayerFactory.build
+
+
+@pytest.fixture
+def lenient_ssn_tax_payer_factory() -> Callable[..., LenientSsnTaxPayer]:
+    """Build tax payers whose SSN field accepts reserved ranges."""
+
+    return LenientSsnTaxPayerFactory.build
+
+
+@pytest.fixture
+def untaxed_party_factory() -> Callable[..., UntaxedParty]:
+    """Build parties that carry the masking mixin but no tax identifier."""
+
+    return UntaxedPartyFactory.build
+
+
+@pytest.fixture
+def tax_id_alias_set_factory() -> Callable[..., TaxIdAliasSet]:
+    """Build models carrying one field per shipped alias."""
+
+    return TaxIdAliasSetFactory.build
+
+
+@pytest.fixture
+def masked_tax_id_alias_set_factory() -> Callable[..., MaskedTaxIdAliasSet]:
+    """Build models whose alias fields accept an already-masked value."""
+
+    return MaskedTaxIdAliasSetFactory.build
