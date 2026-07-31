@@ -27,7 +27,7 @@ from pydantic import BaseModel
 from tax_identifiers import SSNTaxIdField
 
 
-class Contractor(BaseModel):
+class TaxPayer(BaseModel):
     tax_id: SSNTaxIdField
 ```
 
@@ -122,12 +122,12 @@ from pydantic_super_model import SuperModelPydanticMixin
 from tax_identifiers import SSNTaxIdField, TaxIdentifierPairMixin
 
 
-class ContractorTaxInfo(TaxIdentifierPairMixin, SuperModelPydanticMixin):
+class TaxPayer(TaxIdentifierPairMixin, SuperModelPydanticMixin):
     name: str
     tax_id: SSNTaxIdField
 
 
-record = ContractorTaxInfo(name="Jane Doe", tax_id="123-45-6789")
+record = TaxPayer(name="Jane Doe", tax_id="123-45-6789")
 record.tax_id == "123456789"   # normalized on construction
 
 masked = record.to_masked()
@@ -154,10 +154,12 @@ A field that reads a value back from storage already masked, such as `"*****6789
 ```python
 from typing import Annotated
 
+from pydantic import BaseModel
+
 from tax_identifiers import AllowMasked, USTaxIdField
 
 
-class ContractorTaxRecord(BaseModel):
+class StoredTaxPayer(BaseModel):
     tax_id: Annotated[USTaxIdField, AllowMasked]
 ```
 
