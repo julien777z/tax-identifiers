@@ -166,6 +166,12 @@ ACTION_CONFIG = ActionConfig()
 Avoid trivial wrapper functions that add no value. A function that just returns its argument or applies a trivial fallback is noise:
 
 - Return `bool` for binary domain outcomes; never return integer `0` or `1` as a boolean substitute. Translate booleans into process exit codes only at the CLI boundary.
+- Return an enum for an outcome with more than two states, or one whose states have names worth
+  reading. Never return bare integers as status codes: `return 1` tells a reader nothing, and
+  every call site has to remember which number means what.
+- A subprocess return code is a real value from outside the program, so a function may return it
+  as an `int`. Convert it into the outcome enum at that boundary rather than carrying the number
+  through the program.
 - Do not rebind function arguments to a second local name when the value is unchanged (for example, `profile = obj`); name the parameter correctly at the signature instead.
 - Do not add passthrough function or method parameters when every call site provides the value from one shared source (for example, forwarding `timeout_seconds` from `APPLICATION_CONFIG` in every call); read from that source directly where the value is used.
 
