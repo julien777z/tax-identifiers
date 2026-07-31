@@ -9,7 +9,6 @@ from tax_identifiers import (
     format_us_ssn,
 )
 from tax_identifiers.normalization import (
-    build_string_normalizer,
     collapse_whitespace,
     empty_str_to_none,
     transform_required_string,
@@ -35,38 +34,6 @@ class TestTransformRequiredString:
 
         with pytest.raises(ValueError):
             transform_required_string(value)
-
-
-class TestBuildStringNormalizer:
-    """Test that the composable string normalizer applies its options."""
-
-    @pytest.mark.parametrize(
-        ("options", "value", "expected"),
-        [
-            ({"normalize_to_lowercase": True}, "ABC", "abc"),
-            ({"normalize_to_titlecase": True}, "john doe", "John Doe"),
-            ({"strip_non_digits": True}, "a1b2", "12"),
-            ({"strip_trailing_punctuation": True}, "ave. st,", "ave st"),
-        ],
-        ids=["lowercase", "titlecase", "strip_non_digits", "strip_trailing_punctuation"],
-    )
-    def test_applies_selected_options(
-        self,
-        options: dict[str, bool],
-        value: str,
-        expected: str,
-    ) -> None:
-        """Test that the normalizer applies the configured transformations."""
-
-        normalizer = build_string_normalizer(**options)
-
-        assert normalizer(value) == expected
-
-    def test_rejects_conflicting_case_options(self) -> None:
-        """Test that setting more than one case option raises a ValueError."""
-
-        with pytest.raises(ValueError):
-            build_string_normalizer(normalize_to_uppercase=True, normalize_to_lowercase=True)
 
 
 class TestEmptyStrToNone:

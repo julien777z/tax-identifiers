@@ -1,5 +1,4 @@
 import re
-from collections.abc import Callable
 from typing import Final
 
 NON_DIGIT_PATTERN: Final[re.Pattern[str]] = re.compile(r"\D+")
@@ -39,40 +38,3 @@ def transform_required_string(value: str | None) -> str:
         raise ValueError("Value cannot be empty")
 
     return normalized_value
-
-
-def build_string_normalizer(
-    *,
-    normalize_to_uppercase: bool = False,
-    normalize_to_lowercase: bool = False,
-    normalize_to_titlecase: bool = False,
-    strip_non_digits: bool = False,
-    strip_trailing_punctuation: bool = False,
-) -> Callable[[str], str]:
-    """Build a composable string normalizer from normalization options."""
-
-    if sum([normalize_to_uppercase, normalize_to_lowercase, normalize_to_titlecase]) > 1:
-        raise ValueError(
-            "Only one of normalize_to_uppercase, normalize_to_lowercase, "
-            "or normalize_to_titlecase may be set."
-        )
-
-    def _normalize(value: str) -> str:
-        result = collapse_whitespace(value)
-
-        if normalize_to_uppercase:
-            result = result.upper()
-        elif normalize_to_lowercase:
-            result = result.lower()
-        elif normalize_to_titlecase:
-            result = result.title()
-
-        if strip_trailing_punctuation:
-            result = " ".join(token for token in (t.rstrip(".,") for t in result.split()) if token)
-
-        if strip_non_digits:
-            result = NON_DIGIT_PATTERN.sub("", result)
-
-        return result
-
-    return _normalize

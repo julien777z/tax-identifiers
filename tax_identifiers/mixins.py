@@ -1,10 +1,8 @@
 from typing import TYPE_CHECKING, Self
 
-from pydantic_super_model import AnnotatedFieldInfo, SuperModelPydanticMixin
+from pydantic_super_model import SuperModelPydanticMixin
 
 from tax_identifiers.annotations import TaxIdFieldOptions
-from tax_identifiers.countries import Country
-from tax_identifiers.enums import TaxIdentifierType
 from tax_identifiers.masking import mask_tax_id
 
 if TYPE_CHECKING:
@@ -13,47 +11,25 @@ else:
     MixinHost = object
 
 
-def matched_tax_id_options(field_info: AnnotatedFieldInfo) -> TaxIdFieldOptions | None:
-    """Return the tax-id options carried by an annotated field, when present."""
-
-    return next(
-        (
-            metadata
-            for metadata in field_info.matched_metadata
-            if isinstance(metadata, TaxIdFieldOptions)
-        ),
-        None,
-    )
-
-
 class TaxIdentifierPairMixin(MixinHost):
     """Normalize and mask tax identifier fields using tax-id annotation metadata."""
 
     def tax_id_field_options(self, field_name: str) -> TaxIdFieldOptions | None:
-        """Return tax-id field metadata when present."""
+        """Return the country and type a tax identifier field declares, when it declares any."""
 
         field_info = self.get_annotated_fields(TaxIdFieldOptions).get(field_name)
 
         if field_info is None:
             return None
 
-        return matched_tax_id_options(field_info)
-
-    @property
-    def tax_identifier_country(self) -> Country | None:
-        """Return the country metadata for the tax_id field."""
-
-        options = self.tax_id_field_options("tax_id")
-
-        return options.country if options else None
-
-    @property
-    def tax_identifier_type(self) -> TaxIdentifierType | None:
-        """Return the tax identifier type metadata for the tax_id field."""
-
-        options = self.tax_id_field_options("tax_id")
-
-        return options.tax_id_type if options else None
+        return next(
+            (
+                metadata
+                for metadata in field_info.matched_metadata
+                if isinstance(metadata, TaxIdFieldOptions)
+            ),
+            None,
+        )
 
     def to_masked(self) -> Self:
         """Return a copy with tax-identifier fields masked and originals persisted."""

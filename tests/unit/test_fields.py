@@ -269,14 +269,16 @@ class TestSsnStructuralValidation:
     def test_lenient_field_still_declares_the_ssn_type(
         self, tax_id_factory: Callable[..., str]
     ) -> None:
-        """Test that the lenient field keeps the country and type metadata the mixin reads."""
+        """Test that the lenient field keeps the country and type metadata it was declared with."""
 
         holder = LenientTaxIdentifierHolder(
             tax_id=tax_id_factory(TaxIdentifierType.SSN, area="666")
         )
+        options = holder.tax_id_field_options("tax_id")
 
-        assert holder.tax_identifier_country is Country.US
-        assert holder.tax_identifier_type is TaxIdentifierType.SSN
+        assert options is not None
+        assert options.country is Country.US
+        assert options.tax_id_type is TaxIdentifierType.SSN
 
 
 class TestPermissiveTaxIdFields:

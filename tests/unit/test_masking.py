@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from tax_identifiers import Country, TaxIdentifierType, format_us_ssn
+from tax_identifiers import TaxIdentifierType, format_us_ssn
 from tests.conftest import PlainHolder, TaxIdentifierHolder
 
 
@@ -68,18 +68,3 @@ class TestTaxIdentifierMasking:
         holder = PlainHolder(name=business_name_factory())
 
         assert holder.to_masked() is holder
-
-
-class TestTaxIdentifierFieldMetadata:
-    """Test that annotation metadata is exposed from the model."""
-
-    def test_exposes_country_and_type(
-        self,
-        tax_identifier_holder_factory: Callable[..., TaxIdentifierHolder],
-    ) -> None:
-        """Test that the field's country and tax identifier type are exposed from metadata."""
-
-        holder = tax_identifier_holder_factory()
-
-        assert holder.tax_identifier_country == Country.US
-        assert holder.tax_identifier_type == TaxIdentifierType.SSN
