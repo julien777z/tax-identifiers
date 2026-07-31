@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import pytest
 
 from tax_identifiers import (
@@ -8,7 +9,6 @@ from tax_identifiers import (
     format_us_ssn,
 )
 from tests.factories import (
-    TaxIdentifierFactory,
     generate_tax_id,
 )
 
@@ -33,11 +33,11 @@ class TestTaxIdentifierValid:
         assert identifier.valid is False
 
     def test_generated_ssn_is_valid(
-        self,
+        self, tax_identifier_factory: Callable[..., TaxIdentifier]
     ) -> None:
         """Test that a structurally sound SSN passes the validity check."""
 
-        identifier = TaxIdentifierFactory.build(tax_id_type=TaxIdentifierType.SSN)
+        identifier = tax_identifier_factory(tax_id_type=TaxIdentifierType.SSN)
 
         assert identifier.valid is True
 
@@ -49,10 +49,11 @@ class TestTaxIdentifierValid:
     def test_non_ssn_us_types_are_valid(
         self,
         tax_id_type: TaxIdentifierType,
+        tax_identifier_factory: Callable[..., TaxIdentifier],
     ) -> None:
         """Test that non-SSN US identifier types skip reserved-range checks."""
 
-        identifier = TaxIdentifierFactory.build(tax_id_type=tax_id_type)
+        identifier = tax_identifier_factory(tax_id_type=tax_id_type)
 
         assert identifier.valid is True
 
@@ -61,20 +62,20 @@ class TestTaxIdentifierMetadata:
     """Test that SSN metadata is derived from an identifier."""
 
     def test_exposes_metadata_for_ssn(
-        self,
+        self, tax_identifier_factory: Callable[..., TaxIdentifier]
     ) -> None:
         """Test that an SSN exposes a resolved metadata object."""
 
-        identifier = TaxIdentifierFactory.build(tax_id_type=TaxIdentifierType.SSN)
+        identifier = tax_identifier_factory(tax_id_type=TaxIdentifierType.SSN)
 
         assert identifier.metadata is not None
 
     def test_returns_none_for_non_ssn(
-        self,
+        self, tax_identifier_factory: Callable[..., TaxIdentifier]
     ) -> None:
         """Test that non-SSN identifiers expose no metadata."""
 
-        identifier = TaxIdentifierFactory.build(tax_id_type=TaxIdentifierType.EIN)
+        identifier = tax_identifier_factory(tax_id_type=TaxIdentifierType.EIN)
 
         assert identifier.metadata is None
 

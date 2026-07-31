@@ -15,25 +15,25 @@ from tax_identifiers.us.enums import USState
 from tax_identifiers.us.fields import USStateField
 
 
-class TaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
+class SsnTaxPayer(TaxIdentifierPairMixin, BaseModel):
     """Test model pairing the masking mixin with an SSN field."""
 
     tax_id: SSNTaxIdField
 
 
-class LenientTaxIdentifierHolder(TaxIdentifierPairMixin, BaseModel):
+class LenientSsnTaxPayer(TaxIdentifierPairMixin, BaseModel):
     """Test model pairing the masking mixin with a lenient SSN field."""
 
     tax_id: LenientSSNTaxIdField
 
 
-class PlainHolder(TaxIdentifierPairMixin, BaseModel):
+class UntaxedParty(TaxIdentifierPairMixin, BaseModel):
     """Test model with the mixin but no tax identifier fields."""
 
     name: str
 
 
-class TaxIdFieldHolder(BaseModel):
+class TaxIdAliasSet(BaseModel):
     """Test model annotated with every shipped tax identifier alias."""
 
     ssn: SSNTaxIdField
@@ -43,7 +43,7 @@ class TaxIdFieldHolder(BaseModel):
     unknown: UnknownTaxIdField
 
 
-class MaskableTaxIdFieldHolder(BaseModel):
+class MaskedTaxIdAliasSet(BaseModel):
     """Test model annotated with every shipped alias accepting masked input."""
 
     us: Annotated[USTaxIdField, AllowMasked]
@@ -51,13 +51,13 @@ class MaskableTaxIdFieldHolder(BaseModel):
     unknown: Annotated[UnknownTaxIdField, AllowMasked]
 
 
-class StateHolder(BaseModel):
+class StateRecord(BaseModel):
     """Test model with a US state field."""
 
     state: USStateField
 
 
-class CountryHolder(BaseModel):
+class CountryRecord(BaseModel):
     """Test model exposing a country field for coercion tests."""
 
     country: Country

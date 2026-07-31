@@ -1,7 +1,10 @@
+from collections.abc import Callable
 from tax_identifiers import TaxIdentifierType, format_us_ssn
+from tests.models import (
+    SsnTaxPayer,
+    UntaxedParty,
+)
 from tests.factories import (
-    PlainHolderFactory,
-    TaxIdentifierHolderFactory,
     generate_tax_id,
 )
 
@@ -16,50 +19,52 @@ class TestTaxIdentifierMasking:
     """Test that tax identifier fields mask and unmask."""
 
     def test_normalizes_on_construction(
-        self,
+        self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]
     ) -> None:
         """Test that a formatted US tax identifier is normalized when the model is built."""
 
         raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
-        holder = TaxIdentifierHolderFactory.build(tax_id=format_us_ssn(raw_tax_id))
+        payer = ssn_tax_payer_factory(tax_id=format_us_ssn(raw_tax_id))
 
-        assert holder.tax_id == raw_tax_id
+        assert payer.tax_id == raw_tax_id
 
     def test_masks_all_but_last_four(
-        self,
+        self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]
     ) -> None:
         """Test that masking hides every character except the last four."""
 
-        holder = TaxIdentifierHolderFactory.build()
-        display = str(holder.tax_id)
+        payer = ssn_tax_payer_factory()
+        display = str(payer.tax_id)
 
-        assert holder.to_masked().tax_id == expected_mask(display)
+        assert payer.to_masked().tax_id == expected_mask(display)
 
     def test_unmask_restores_original_value(
-        self,
+        self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]
     ) -> None:
         """Test that unmasking restores the original identifier."""
 
-        holder = TaxIdentifierHolderFactory.build()
-        display = str(holder.tax_id)
+        payer = ssn_tax_payer_factory()
+        display = str(payer.tax_id)
 
-        assert holder.to_masked().to_unmask().tax_id == display
+        assert payer.to_masked().to_unmask().tax_id == display
 
     def test_masking_twice_preserves_original(
-        self,
+        self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]
     ) -> None:
         """Test that masking an already-masked model keeps the original recoverable."""
 
-        holder = TaxIdentifierHolderFactory.build()
-        display = str(holder.tax_id)
-        masked_twice = holder.to_masked().to_masked()
+        payer = ssn_tax_payer_factory()
+        display = str(payer.tax_id)
+        masked_twice = payer.to_masked().to_masked()
 
         assert masked_twice.tax_id == expected_mask(display)
         assert masked_twice.to_unmask().tax_id == display
 
-    def test_masking_is_a_noop_without_tax_fields(self) -> None:
+    def test_masking_is_a_noop_without_tax_fields(
+        self, untaxed_party_factory: Callable[..., UntaxedParty]
+    ) -> None:
         """Test that masking a model without tax identifier fields returns it unchanged."""
 
-        holder = PlainHolderFactory.build()
+        party = untaxed_party_factory()
 
-        assert holder.to_masked() is holder
+        assert party.to_masked() is party

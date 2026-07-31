@@ -427,6 +427,7 @@ except Exception as exc:
 - Banned terms and what to use instead:
   - **"best effort"** — state the real contract. A function that swallows failures and reports the outcome should say so: name it `try_<verb>` (for example `try_send_email`) and document it as "returning whether it succeeded", not "best-effort".
   - **"seed" / "seeds" / "seeding"** (for test data or sample records) — name the helper for what it builds: a `<noun>_*_factory` fixture, `create_*`, or "sample data". Do not call setup data a "seed".
+  - **"holder"** (for a model or object that carries a field under test) — name it for the thing it models, not for the fact that it holds something: `SsnTaxPayer`, `StateRecord`, `TaxIdAliasSet`. A name ending in "Holder" says nothing a reader can use.
 - If you reach for a placeholder-ish term a future reader could not decode from the name alone, pick a more intuitive name instead of adding it to this list.
 
 - Add a blank line after each docstring.

@@ -8,11 +8,11 @@ from tax_identifiers import (
     mask_tax_id,
 )
 from tests.models import (
-    LenientTaxIdentifierHolder,
-    MaskableTaxIdFieldHolder,
-    PlainHolder,
-    TaxIdentifierHolder,
-    TaxIdFieldHolder,
+    LenientSsnTaxPayer,
+    MaskedTaxIdAliasSet,
+    UntaxedParty,
+    SsnTaxPayer,
+    TaxIdAliasSet,
 )
 
 FOREIGN_TAX_ID_PREFIX = "GB"
@@ -78,10 +78,10 @@ class TaxIdentifierFactory(ModelFactory[TaxIdentifier]):
         return generate_tax_id(tax_id_type)
 
 
-class TaxIdentifierHolderFactory(ModelFactory[TaxIdentifierHolder]):
-    """Factory for TaxIdentifierHolder."""
+class SsnTaxPayerFactory(ModelFactory[SsnTaxPayer]):
+    """Factory for SsnTaxPayer."""
 
-    __model__ = TaxIdentifierHolder
+    __model__ = SsnTaxPayer
 
     @classmethod
     def tax_id(cls) -> str:
@@ -90,10 +90,10 @@ class TaxIdentifierHolderFactory(ModelFactory[TaxIdentifierHolder]):
         return generate_tax_id(TaxIdentifierType.SSN)
 
 
-class LenientTaxIdentifierHolderFactory(ModelFactory[LenientTaxIdentifierHolder]):
-    """Factory for LenientTaxIdentifierHolder."""
+class LenientSsnTaxPayerFactory(ModelFactory[LenientSsnTaxPayer]):
+    """Factory for LenientSsnTaxPayer."""
 
-    __model__ = LenientTaxIdentifierHolder
+    __model__ = LenientSsnTaxPayer
 
     @classmethod
     def tax_id(cls) -> str:
@@ -102,10 +102,10 @@ class LenientTaxIdentifierHolderFactory(ModelFactory[LenientTaxIdentifierHolder]
         return generate_tax_id(TaxIdentifierType.SSN)
 
 
-class PlainHolderFactory(ModelFactory[PlainHolder]):
-    """Factory for PlainHolder."""
+class UntaxedPartyFactory(ModelFactory[UntaxedParty]):
+    """Factory for UntaxedParty."""
 
-    __model__ = PlainHolder
+    __model__ = UntaxedParty
 
     @classmethod
     def name(cls) -> str:
@@ -114,10 +114,10 @@ class PlainHolderFactory(ModelFactory[PlainHolder]):
         return cls.__faker__.company()
 
 
-class TaxIdFieldHolderFactory(ModelFactory[TaxIdFieldHolder]):
-    """Factory for TaxIdFieldHolder."""
+class TaxIdAliasSetFactory(ModelFactory[TaxIdAliasSet]):
+    """Factory for TaxIdAliasSet."""
 
-    __model__ = TaxIdFieldHolder
+    __model__ = TaxIdAliasSet
 
     @classmethod
     def ssn(cls) -> str:
@@ -150,10 +150,10 @@ class TaxIdFieldHolderFactory(ModelFactory[TaxIdFieldHolder]):
         return generate_tax_id(TaxIdentifierType.SSN)
 
 
-class MaskableTaxIdFieldHolderFactory(ModelFactory[MaskableTaxIdFieldHolder]):
-    """Factory for MaskableTaxIdFieldHolder."""
+class MaskedTaxIdAliasSetFactory(ModelFactory[MaskedTaxIdAliasSet]):
+    """Factory for MaskedTaxIdAliasSet."""
 
-    __model__ = MaskableTaxIdFieldHolder
+    __model__ = MaskedTaxIdAliasSet
 
     @classmethod
     def us(cls) -> str:

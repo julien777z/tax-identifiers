@@ -5,7 +5,7 @@ from tax_identifiers import (
     Country,
     UnknownCountryError,
 )
-from tests.models import CountryHolder
+from tests.models import CountryRecord
 
 
 class TestCountryFromString:
@@ -75,10 +75,10 @@ class TestCountryFieldCoercion:
     def test_coerces_raw_country_strings(self, value: str, expected: Country) -> None:
         """Test that a country field accepts raw strings such as DB column values."""
 
-        assert CountryHolder(country=value).country == expected
+        assert CountryRecord(country=value).country == expected
 
     def test_rejects_unknown_country_string(self) -> None:
         """Test that an unresolvable country string fails field validation."""
 
         with pytest.raises(ValidationError):
-            CountryHolder(country="Notacountry")
+            CountryRecord(country="Notacountry")

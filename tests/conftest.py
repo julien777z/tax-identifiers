@@ -1,11 +1,28 @@
+from collections.abc import Callable
+
 import pytest
 
-from tax_identifiers import Country, TaxValidator
+from tax_identifiers import Country, TaxIdentifier, TaxValidator
 from tax_identifiers.us import metadata as us_metadata
 from tax_identifiers.us.enums import USState
 from tax_identifiers.us.metadata import SSNAllocationEntry
-from tests.factories import FOREIGN_TAX_ID_PREFIX
-from tests.models import AllocatedSsn
+from tests.factories import (
+    FOREIGN_TAX_ID_PREFIX,
+    LenientSsnTaxPayerFactory,
+    MaskedTaxIdAliasSetFactory,
+    SsnTaxPayerFactory,
+    TaxIdAliasSetFactory,
+    TaxIdentifierFactory,
+    UntaxedPartyFactory,
+)
+from tests.models import (
+    AllocatedSsn,
+    LenientSsnTaxPayer,
+    MaskedTaxIdAliasSet,
+    SsnTaxPayer,
+    TaxIdAliasSet,
+    UntaxedParty,
+)
 
 
 @pytest.fixture
@@ -50,3 +67,45 @@ def allocated_ssn(ssn_allocation: dict[str, SSNAllocationEntry]) -> AllocatedSsn
         issued_state=USState(entry["state"]),
         issued_years=years,
     )
+
+
+@pytest.fixture
+def tax_identifier_factory() -> Callable[..., TaxIdentifier]:
+    """Build TaxIdentifier models."""
+
+    return TaxIdentifierFactory.build
+
+
+@pytest.fixture
+def ssn_tax_payer_factory() -> Callable[..., SsnTaxPayer]:
+    """Build tax payers whose SSN field asserts validity."""
+
+    return SsnTaxPayerFactory.build
+
+
+@pytest.fixture
+def lenient_ssn_tax_payer_factory() -> Callable[..., LenientSsnTaxPayer]:
+    """Build tax payers whose SSN field accepts reserved ranges."""
+
+    return LenientSsnTaxPayerFactory.build
+
+
+@pytest.fixture
+def untaxed_party_factory() -> Callable[..., UntaxedParty]:
+    """Build parties that carry the masking mixin but no tax identifier."""
+
+    return UntaxedPartyFactory.build
+
+
+@pytest.fixture
+def tax_id_alias_set_factory() -> Callable[..., TaxIdAliasSet]:
+    """Build models carrying one field per shipped alias."""
+
+    return TaxIdAliasSetFactory.build
+
+
+@pytest.fixture
+def masked_tax_id_alias_set_factory() -> Callable[..., MaskedTaxIdAliasSet]:
+    """Build models whose alias fields accept an already-masked value."""
+
+    return MaskedTaxIdAliasSetFactory.build
