@@ -100,6 +100,22 @@ class TestTaxIdField:
         with pytest.raises(ValidationError):
             tax_id_field_holder_factory(us=int(tax_id_factory(TaxIdentifierType.SSN)))
 
+    @pytest.mark.parametrize(
+        "field_name",
+        ["ssn", "us", "foreign", "unknown"],
+        ids=["ssn", "us_unspecified", "foreign", "unknown"],
+    )
+    def test_every_alias_rejects_masked_input_without_the_marker(
+        self,
+        field_name: str,
+        masked_tax_id_factory: Callable[..., str],
+        tax_id_field_holder_factory: Callable[..., TaxIdFieldHolder],
+    ) -> None:
+        """Test that rejecting a masked value is the default every alias keeps on its own."""
+
+        with pytest.raises(ValidationError, match="Tax ID cannot contain mask characters"):
+            tax_id_field_holder_factory(**{field_name: masked_tax_id_factory()})
+
     @pytest.mark.parametrize("plain", [False, True], ids=["maskable_type", "plain_string"])
     def test_accepts_masked_value_when_configured(
         self,
@@ -181,7 +197,7 @@ class TestTaxIdFieldOptions:
 
         assert options.country is Country.UNKNOWN
         assert options.tax_id_type is TaxIdentifierType.NONE
-        assert not options.allow_masked
+        assert options.assert_validity
 
 
 class TestUnsupportedTaxIdTypeDeclaration:

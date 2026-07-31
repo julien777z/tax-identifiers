@@ -30,18 +30,3 @@ ForeignTaxIdField: TypeAlias = Annotated[
 ]
 
 UnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, TaxIdFieldOptions()]
-
-MaskableUSTaxIdField: TypeAlias = Annotated[
-    TaxIdStr,
-    TaxIdFieldOptions(
-        country=Country.US,
-        tax_id_type=TaxIdentifierType.US_UNSPECIFIED,
-        allow_masked=True,
-    ),
-]
-
-MaskableForeignTaxIdField: TypeAlias = Annotated[
-    TaxIdStr, TaxIdFieldOptions(tax_id_type=TaxIdentifierType.FOREIGN_TIN, allow_masked=True)
-]
-
-MaskableUnknownTaxIdField: TypeAlias = Annotated[TaxIdStr, TaxIdFieldOptions(allow_masked=True)]

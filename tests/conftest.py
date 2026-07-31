@@ -1,16 +1,14 @@
 import random
 from collections.abc import Callable
-from typing import Final
+from typing import Annotated, Final
 
 import pytest
 
 from tax_identifiers import (
+    AllowMasked,
     Country,
     ForeignTaxIdField,
     LenientSSNTaxIdField,
-    MaskableForeignTaxIdField,
-    MaskableUnknownTaxIdField,
-    MaskableUSTaxIdField,
     SSNTaxIdField,
     TaxIdentifier,
     TaxIdentifierPairMixin,
@@ -62,9 +60,9 @@ class TaxIdFieldHolder(BaseModel):
 class MaskableTaxIdFieldHolder(BaseModel):
     """Test model annotated with every shipped mask-accepting tax identifier alias."""
 
-    us: MaskableUSTaxIdField
-    foreign: MaskableForeignTaxIdField
-    unknown: MaskableUnknownTaxIdField
+    us: Annotated[USTaxIdField, AllowMasked]
+    foreign: Annotated[ForeignTaxIdField, AllowMasked]
+    unknown: Annotated[UnknownTaxIdField, AllowMasked]
 
 
 class StateHolder(BaseModel):

@@ -11,8 +11,12 @@ from tax_identifiers import (
 from tax_identifiers.base import BaseModel
 from tax_identifiers.fields import StrRequired
 from tax_identifiers.us.enums import USState
-from tax_identifiers.us.fields import USStateField
-from tests.conftest import MaskableTaxIdFieldHolder, TaxIdentifierHolder, TaxIdFieldHolder
+from tests.conftest import (
+    MaskableTaxIdFieldHolder,
+    StateHolder,
+    TaxIdentifierHolder,
+    TaxIdFieldHolder,
+)
 
 COVERED_FIELD_TYPES: Final[frozenset[str]] = frozenset(
     {
@@ -21,9 +25,6 @@ COVERED_FIELD_TYPES: Final[frozenset[str]] = frozenset(
         "USTaxIdField",
         "ForeignTaxIdField",
         "UnknownTaxIdField",
-        "MaskableUSTaxIdField",
-        "MaskableForeignTaxIdField",
-        "MaskableUnknownTaxIdField",
         "TaxIdStr",
     }
 )
@@ -34,11 +35,10 @@ FrenchTinField = Annotated[
 ]
 
 
-class OtherFieldHolder(BaseModel):
-    """Model annotated with the remaining shipped field types."""
+class UnconfiguredStringHolder(BaseModel):
+    """Model annotated with the shipped string field types that carry no tax configuration."""
 
     required: StrRequired
-    state: USStateField
     tax_id: TaxIdStr
 
 
@@ -60,9 +60,8 @@ class TestStaticAnnotations:
 
         assert_type(holder.ssn, str)
         assert_type(holder.unknown, str)
-        assert_type(
-            OtherFieldHolder(required="x", state=USState.CALIFORNIA, tax_id="x").state, USState
-        )
+        assert_type(UnconfiguredStringHolder(required="x", tax_id="x").tax_id, str)
+        assert_type(StateHolder(state=USState.CALIFORNIA).state, USState)
 
     def test_mixin_combination_is_correctly_typed(
         self, tax_identifier_holder_factory: Callable[..., TaxIdentifierHolder]

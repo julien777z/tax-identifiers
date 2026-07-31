@@ -139,18 +139,31 @@ A field rejects a value its country's rules find structurally invalid, raising `
 
 `LenientSSNTaxIdField` normalizes and carries the same SSN metadata but does not reject, for parsing payloads from a third party whose values you do not control. Any annotation can opt out the same way with `TaxIdFieldOptions(..., assert_validity=False)`.
 
-The shipped aliases. A `Maskable` name accepts a value that is already masked, such as `"*****6789"` read back from storage; the others reject one. Masked values skip the validity check.
+The shipped aliases, each naming a country and an identifier type. Every one rejects a value that is already masked.
 
-| Alias | Country | Type | Accepts masked input |
-|-------|---------|------|----------------------|
-| `SSNTaxIdField` | US | SSN | no |
-| `LenientSSNTaxIdField` | US | SSN | no |
-| `USTaxIdField` | US | unspecified | no |
-| `ForeignTaxIdField` | `UNKNOWN` | foreign TIN | no |
-| `UnknownTaxIdField` | `UNKNOWN` | none | no |
-| `MaskableUSTaxIdField` | US | unspecified | yes |
-| `MaskableForeignTaxIdField` | `UNKNOWN` | foreign TIN | yes |
-| `MaskableUnknownTaxIdField` | `UNKNOWN` | none | yes |
+| Alias | Country | Type |
+|-------|---------|------|
+| `SSNTaxIdField` | US | SSN |
+| `LenientSSNTaxIdField` | US | SSN |
+| `USTaxIdField` | US | unspecified |
+| `ForeignTaxIdField` | `UNKNOWN` | foreign TIN |
+| `UnknownTaxIdField` | `UNKNOWN` | none |
+
+A field that reads a value back from storage already masked, such as `"*****6789"`, adds `AllowMasked`:
+
+```python
+from typing import Annotated
+
+from tax_identifiers import AllowMasked, USTaxIdField
+
+
+class ContractorTaxRecord(BaseModel):
+    tax_id: Annotated[USTaxIdField, AllowMasked]
+```
+
+`AllowMasked` composes with any alias or custom annotation, so masking stays one marker rather than a variant of every name. A masked value is returned untouched, skipping normalization and the validity check.
+
+Leniency is a field option rather than a marker because it is a decision inside the validity check, not a test on the raw input: `LenientSSNTaxIdField` carries the same SSN country and type metadata but does not reject.
 
 For any other combination, put `TaxIdFieldOptions` inside an `Annotated`:
 

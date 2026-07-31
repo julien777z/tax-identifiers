@@ -17,6 +17,29 @@ from tax_identifiers.masking import (
 from tax_identifiers.rules import get_country_rules
 
 
+class AllowMasked:
+    """Annotation metadata letting an already-masked value through a tax ID field."""
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: object, handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        """Return the masked value untouched and defer everything else to the field."""
+
+        return core_schema.no_info_wrap_validator_function(
+            cls.keep_masked_value, handler(source_type)
+        )
+
+    @classmethod
+    def keep_masked_value(cls, value: object, handler: ValidatorFunctionWrapHandler) -> str:
+        """Return a masked value as-is, passing anything else to the wrapped field."""
+
+        if isinstance(value, str) and (is_masked_tax_id(value) or contains_mask_characters(value)):
+            return MaskableTaxId(value, is_masked=True)
+
+        return handler(value)
+
+
 class TaxIdFieldOptions:
     """Annotation metadata for configuring tax ID field normalization."""
 
@@ -25,14 +48,12 @@ class TaxIdFieldOptions:
         *,
         country: Country = Country.UNKNOWN,
         tax_id_type: TaxIdentifierType = TaxIdentifierType.NONE,
-        allow_masked: bool = False,
         assert_validity: bool = True,
     ):
         """Store tax ID field options for downstream validators."""
 
         self.country = country
         self.tax_id_type = tax_id_type
-        self.allow_masked = allow_masked
         self.assert_validity = assert_validity
 
     def __get_pydantic_core_schema__(
@@ -51,9 +72,6 @@ class TaxIdFieldOptions:
         """Normalize a tax ID value and reject it when its country's rules find it invalid."""
 
         if isinstance(value, str) and (is_masked_tax_id(value) or contains_mask_characters(value)):
-            if self.allow_masked:
-                return MaskableTaxId(value, is_masked=True)
-
             raise ValueError(MASK_REJECTION_MESSAGE)
 
         rules = get_country_rules(self.country)

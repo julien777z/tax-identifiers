@@ -1,4 +1,4 @@
-from tax_identifiers.annotations import TaxIdFieldOptions
+from tax_identifiers.annotations import AllowMasked, TaxIdFieldOptions
 from tax_identifiers.countries import Country
 from tax_identifiers.enums import (
     TaxIdentifierOrigin,
@@ -14,9 +14,6 @@ from tax_identifiers.exceptions import (
 from tax_identifiers.fields import (
     ForeignTaxIdField,
     LenientSSNTaxIdField,
-    MaskableForeignTaxIdField,
-    MaskableUnknownTaxIdField,
-    MaskableUSTaxIdField,
     SSNTaxIdField,
     TaxIdStr,
     UnknownTaxIdField,
@@ -63,15 +60,13 @@ __all__ = [
     "MaskableTaxId",
     "is_masked_tax_id",
     "TaxIdFieldOptions",
+    "AllowMasked",
     "TaxIdStr",
     "SSNTaxIdField",
     "LenientSSNTaxIdField",
     "USTaxIdField",
     "ForeignTaxIdField",
     "UnknownTaxIdField",
-    "MaskableUSTaxIdField",
-    "MaskableForeignTaxIdField",
-    "MaskableUnknownTaxIdField",
     "UsTaxRules",
     "SSNValidation",
     "US_TAX_IDENTIFIER_TYPES",
