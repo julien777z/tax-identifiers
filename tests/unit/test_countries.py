@@ -5,7 +5,7 @@ from tax_identifiers import (
     Country,
     UnknownCountryError,
 )
-from tests.conftest import CountryHolder
+from tests.models import CountryHolder
 
 
 class TestCountryFromString:

@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import Annotated, Final
 
 import pytest
@@ -18,12 +17,16 @@ from tax_identifiers import (
 )
 from tax_identifiers.base import BaseModel
 from tax_identifiers.us.enums import USState
-from tests.conftest import (
+from tests.factories import (
+    MaskableTaxIdFieldHolderFactory,
+    TaxIdFieldHolderFactory,
+    generate_masked_tax_id,
+    generate_tax_id,
+)
+from tests.models import (
     LenientTaxIdentifierHolder,
-    MaskableTaxIdFieldHolder,
     StateHolder,
     TaxIdentifierHolder,
-    TaxIdFieldHolder,
 )
 
 RESERVED_SSN_SEGMENTS: Final[list[dict[str, str]]] = [
@@ -69,36 +72,30 @@ class TestTaxIdField:
 
     def test_normalizes_us_identifier(
         self,
-        tax_id_factory: Callable[..., str],
-        tax_id_field_holder_factory: Callable[..., TaxIdFieldHolder],
     ) -> None:
         """Test that a US identifier is stored as a formatting-insensitive value."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
-        holder = tax_id_field_holder_factory(us=format_us_ssn(raw_tax_id))
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
+        holder = TaxIdFieldHolderFactory.build(us=format_us_ssn(raw_tax_id))
 
         assert isinstance(holder.us, ComparableUsTaxIdentifier)
         assert holder.us == raw_tax_id
 
     def test_rejects_masked_value_by_default(
         self,
-        masked_tax_id_factory: Callable[..., str],
-        tax_id_field_holder_factory: Callable[..., TaxIdFieldHolder],
     ) -> None:
         """Test that a masked tax identifier is rejected unless masking is allowed."""
 
         with pytest.raises(ValidationError, match="Tax ID cannot contain mask characters"):
-            tax_id_field_holder_factory(us=masked_tax_id_factory())
+            TaxIdFieldHolderFactory.build(us=generate_masked_tax_id())
 
     def test_rejects_non_string_value(
         self,
-        tax_id_factory: Callable[..., str],
-        tax_id_field_holder_factory: Callable[..., TaxIdFieldHolder],
     ) -> None:
         """Test that a non-string tax identifier is rejected without a type error."""
 
         with pytest.raises(ValidationError):
-            tax_id_field_holder_factory(us=int(tax_id_factory(TaxIdentifierType.SSN)))
+            TaxIdFieldHolderFactory.build(us=int(generate_tax_id(TaxIdentifierType.SSN)))
 
     @pytest.mark.parametrize(
         "field_name",
@@ -108,25 +105,21 @@ class TestTaxIdField:
     def test_every_alias_rejects_masked_input_without_the_marker(
         self,
         field_name: str,
-        masked_tax_id_factory: Callable[..., str],
-        tax_id_field_holder_factory: Callable[..., TaxIdFieldHolder],
     ) -> None:
         """Test that rejecting a masked value is the default every alias keeps on its own."""
 
         with pytest.raises(ValidationError, match="Tax ID cannot contain mask characters"):
-            tax_id_field_holder_factory(**{field_name: masked_tax_id_factory()})
+            TaxIdFieldHolderFactory.build(**{field_name: generate_masked_tax_id()})
 
     @pytest.mark.parametrize("plain", [False, True], ids=["maskable_type", "plain_string"])
     def test_accepts_masked_value_when_configured(
         self,
-        masked_tax_id_factory: Callable[..., str],
-        maskable_tax_id_field_holder_factory: Callable[..., MaskableTaxIdFieldHolder],
         plain: bool,
     ) -> None:
         """Test that a masked tax identifier passes through when masking is allowed."""
 
-        masked = masked_tax_id_factory(plain=plain)
-        holder = maskable_tax_id_field_holder_factory(us=masked)
+        masked = generate_masked_tax_id(plain=plain)
+        holder = MaskableTaxIdFieldHolderFactory.build(us=masked)
 
         assert holder.us == masked
         assert is_masked_tax_id(holder.us)
@@ -138,22 +131,21 @@ class TestUnknownCountryTaxIdField:
     def test_normalizes_generically(
         self,
         normalizable_foreign_tax_id: tuple[str, str],
-        tax_id_field_holder_factory: Callable[..., TaxIdFieldHolder],
     ) -> None:
         """Test that an unknown-country field uppercases without US cleaning."""
 
         raw, normalized = normalizable_foreign_tax_id
 
-        assert tax_id_field_holder_factory(unknown=raw).unknown == normalized
+        assert TaxIdFieldHolderFactory.build(unknown=raw).unknown == normalized
 
 
 class TestInlineTaxIdFieldOptions:
     """Test that a tax identifier field configured inline matches a shipped alias."""
 
-    def test_matches_the_equivalent_alias(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_matches_the_equivalent_alias(self) -> None:
         """Test that an inline annotation behaves identically to the matching alias."""
 
-        formatted = format_us_ssn(tax_id_factory(TaxIdentifierType.SSN))
+        formatted = format_us_ssn(generate_tax_id(TaxIdentifierType.SSN))
         inline_adapter: TypeAdapter[str] = TypeAdapter(
             Annotated[
                 TaxIdStr,
@@ -172,12 +164,10 @@ class TestInlineTaxIdFieldOptions:
 class TestMixinNormalizationEquivalence:
     """Test that the masking mixin does not change how a tax identifier field normalizes."""
 
-    def test_stored_value_matches_the_bare_annotation(
-        self, tax_id_factory: Callable[..., str]
-    ) -> None:
+    def test_stored_value_matches_the_bare_annotation(self) -> None:
         """Test that a mixin-bearing SSN field stores exactly what its annotation produces."""
 
-        formatted = format_us_ssn(tax_id_factory(TaxIdentifierType.SSN))
+        formatted = format_us_ssn(generate_tax_id(TaxIdentifierType.SSN))
         annotation_adapter: TypeAdapter[str] = TypeAdapter(SSNTaxIdField)
 
         mixin_value = TaxIdentifierHolder(tax_id=formatted).tax_id
@@ -235,14 +225,13 @@ class TestSsnStructuralValidation:
     @pytest.mark.parametrize("segments", RESERVED_SSN_SEGMENTS, ids=RESERVED_SSN_SEGMENT_IDS)
     def test_reserved_identifiers_are_rejected_only_when_validity_is_asserted(
         self,
-        tax_id_factory: Callable[..., str],
         segments: dict[str, str],
         holder: type[TaxIdentifierHolder] | type[LenientTaxIdentifierHolder],
         rejects: bool,
     ) -> None:
         """Test that each reserved SSN segment is rejected by the strict field and kept by the lenient one."""
 
-        reserved = tax_id_factory(TaxIdentifierType.SSN, **segments)
+        reserved = generate_tax_id(TaxIdentifierType.SSN, **segments)
 
         if rejects:
             with pytest.raises(ValidationError, match="is not a valid"):
@@ -257,22 +246,19 @@ class TestSsnStructuralValidation:
     )
     def test_normalizes_a_structurally_valid_identifier(
         self,
-        tax_id_factory: Callable[..., str],
         holder: type[TaxIdentifierHolder] | type[LenientTaxIdentifierHolder],
     ) -> None:
         """Test that both fields normalize a valid SSN the same way."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         assert holder(tax_id=format_us_ssn(raw_tax_id)).tax_id == raw_tax_id
 
-    def test_lenient_field_still_declares_the_ssn_type(
-        self, tax_id_factory: Callable[..., str]
-    ) -> None:
+    def test_lenient_field_still_declares_the_ssn_type(self) -> None:
         """Test that the lenient field keeps the country and type metadata it was declared with."""
 
         holder = LenientTaxIdentifierHolder(
-            tax_id=tax_id_factory(TaxIdentifierType.SSN, area="666")
+            tax_id=generate_tax_id(TaxIdentifierType.SSN, area="666")
         )
         options = holder.tax_id_field_options("tax_id")
 
@@ -292,13 +278,11 @@ class TestPermissiveTaxIdFields:
     def test_accepts_values_the_ssn_field_rejects(
         self,
         field_name: str,
-        tax_id_factory: Callable[..., str],
-        tax_id_field_holder_factory: Callable[..., TaxIdFieldHolder],
     ) -> None:
         """Test that a value reserved for SSNs still passes fields without SSN rules."""
 
-        reserved = tax_id_factory(TaxIdentifierType.SSN, area="666")
-        holder = tax_id_field_holder_factory(**{field_name: reserved})
+        reserved = generate_tax_id(TaxIdentifierType.SSN, area="666")
+        holder = TaxIdFieldHolderFactory.build(**{field_name: reserved})
 
         assert getattr(holder, field_name) == reserved
 

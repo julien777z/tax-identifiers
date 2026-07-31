@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 import pytest
 
 from tax_identifiers import (
@@ -8,6 +6,10 @@ from tax_identifiers import (
     TaxIdentifier,
     TaxIdentifierType,
     format_us_ssn,
+)
+from tests.factories import (
+    TaxIdentifierFactory,
+    generate_tax_id,
 )
 
 
@@ -32,11 +34,10 @@ class TestTaxIdentifierValid:
 
     def test_generated_ssn_is_valid(
         self,
-        tax_identifier_factory: Callable[..., TaxIdentifier],
     ) -> None:
         """Test that a structurally sound SSN passes the validity check."""
 
-        identifier = tax_identifier_factory(TaxIdentifierType.SSN)
+        identifier = TaxIdentifierFactory.build(tax_id_type=TaxIdentifierType.SSN)
 
         assert identifier.valid is True
 
@@ -47,12 +48,11 @@ class TestTaxIdentifierValid:
     )
     def test_non_ssn_us_types_are_valid(
         self,
-        tax_identifier_factory: Callable[..., TaxIdentifier],
         tax_id_type: TaxIdentifierType,
     ) -> None:
         """Test that non-SSN US identifier types skip reserved-range checks."""
 
-        identifier = tax_identifier_factory(tax_id_type)
+        identifier = TaxIdentifierFactory.build(tax_id_type=tax_id_type)
 
         assert identifier.valid is True
 
@@ -62,21 +62,19 @@ class TestTaxIdentifierMetadata:
 
     def test_exposes_metadata_for_ssn(
         self,
-        tax_identifier_factory: Callable[..., TaxIdentifier],
     ) -> None:
         """Test that an SSN exposes a resolved metadata object."""
 
-        identifier = tax_identifier_factory(TaxIdentifierType.SSN)
+        identifier = TaxIdentifierFactory.build(tax_id_type=TaxIdentifierType.SSN)
 
         assert identifier.metadata is not None
 
     def test_returns_none_for_non_ssn(
         self,
-        tax_identifier_factory: Callable[..., TaxIdentifier],
     ) -> None:
         """Test that non-SSN identifiers expose no metadata."""
 
-        identifier = tax_identifier_factory(TaxIdentifierType.EIN)
+        identifier = TaxIdentifierFactory.build(tax_id_type=TaxIdentifierType.EIN)
 
         assert identifier.metadata is None
 
@@ -86,11 +84,10 @@ class TestTaxIdentifierNormalization:
 
     def test_us_identifier_is_comparable(
         self,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that a US identifier is stored as a formatting-insensitive value."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
         identifier = TaxIdentifier(
             country=Country.US,
             tax_id=format_us_ssn(raw_tax_id),
@@ -117,11 +114,10 @@ class TestTaxIdentifierEquality:
 
     def test_equals_matching_model_across_formatting(
         self,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that dashed and bare forms of the same SSN compare equal."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
         left = TaxIdentifier(
             country=Country.US,
             tax_id=format_us_ssn(raw_tax_id),
@@ -137,11 +133,10 @@ class TestTaxIdentifierEquality:
 
     def test_equals_normalized_string(
         self,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that a model compares equal to its normalized string form."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
         identifier = TaxIdentifier(
             country=Country.US,
             tax_id=format_us_ssn(raw_tax_id),
@@ -152,11 +147,10 @@ class TestTaxIdentifierEquality:
 
     def test_differs_by_tax_id_type(
         self,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that the same digits under different types are not equal."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
         ssn = TaxIdentifier(
             country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.SSN
         )
@@ -168,11 +162,10 @@ class TestTaxIdentifierEquality:
 
     def test_is_hashable_consistently_with_string(
         self,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that a model hashes consistently with its normalized identifier."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
         identifier = TaxIdentifier(
             country=Country.US,
             tax_id=raw_tax_id,

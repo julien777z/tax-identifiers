@@ -1,20 +1,19 @@
-from collections.abc import Callable
-
 import pytest
 
 from tax_identifiers import Country, TaxIdentifierType, TaxValidationResult
-from tests.conftest import AllocatedSsn
+from tests.factories import generate_tax_id
+from tests.models import AllocatedSsn
 
 
 class TestTaxValidationResultFromTaxIdentifier:
     """Test that a validation summary is built from a raw identifier."""
 
-    def test_summarizes_valid_ssn(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_summarizes_valid_ssn(self) -> None:
         """Test that a valid SSN produces a summary with resolved details."""
 
         summary = TaxValidationResult.from_tax_identifier(
             country=Country.US,
-            tax_id=tax_id_factory(TaxIdentifierType.SSN),
+            tax_id=generate_tax_id(TaxIdentifierType.SSN),
             tax_id_type=TaxIdentifierType.SSN,
         )
 
@@ -54,7 +53,6 @@ class TestTaxValidationResultFromTaxIdentifier:
     )
     def test_returns_none_when_inputs_absent(
         self,
-        tax_id_factory: Callable[..., str],
         provide_id: bool,
         provide_type: bool,
     ) -> None:
@@ -62,7 +60,7 @@ class TestTaxValidationResultFromTaxIdentifier:
 
         summary = TaxValidationResult.from_tax_identifier(
             country=Country.US,
-            tax_id=tax_id_factory(TaxIdentifierType.SSN) if provide_id else None,
+            tax_id=generate_tax_id(TaxIdentifierType.SSN) if provide_id else None,
             tax_id_type=TaxIdentifierType.SSN if provide_type else None,
         )
 
@@ -85,26 +83,24 @@ class TestTaxValidationResultFromTaxIdentifier:
 
         assert summary is None
 
-    def test_excludes_raw_tax_id_from_summary(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_excludes_raw_tax_id_from_summary(self) -> None:
         """Test that the serialized summary does not expose the raw tax identifier."""
 
         summary = TaxValidationResult.from_tax_identifier(
             country=Country.US,
-            tax_id=tax_id_factory(TaxIdentifierType.SSN),
+            tax_id=generate_tax_id(TaxIdentifierType.SSN),
             tax_id_type=TaxIdentifierType.SSN,
         )
 
         assert summary is not None
         assert "tax_id" not in summary.model_dump()
 
-    def test_reports_undecided_validity_for_country_without_rules(
-        self, tax_id_factory: Callable[..., str]
-    ) -> None:
+    def test_reports_undecided_validity_for_country_without_rules(self) -> None:
         """Test that summarizing a country without dedicated rules leaves validity undecided."""
 
         summary = TaxValidationResult.from_tax_identifier(
             country=Country.FR,
-            tax_id=tax_id_factory(TaxIdentifierType.FOREIGN_TIN),
+            tax_id=generate_tax_id(TaxIdentifierType.FOREIGN_TIN),
             tax_id_type=TaxIdentifierType.FOREIGN_TIN,
         )
 

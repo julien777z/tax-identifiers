@@ -1,8 +1,10 @@
-from collections.abc import Callable
-
 import pytest
 
 from tax_identifiers import TaxIdentifierType, match_us_tin
+from tests.factories import (
+    generate_full_name,
+    generate_tax_id,
+)
 
 
 class TestMatchUsTin:
@@ -20,14 +22,12 @@ class TestMatchUsTin:
     async def test_raises_not_implemented(
         self,
         tax_id_type: TaxIdentifierType,
-        tax_id_factory: Callable[..., str],
-        full_name_factory: Callable[..., str],
     ) -> None:
         """Test that US TIN matching is not implemented yet and raises NotImplementedError."""
 
         with pytest.raises(NotImplementedError):
             await match_us_tin(
-                full_name=full_name_factory(),
-                tax_id=tax_id_factory(tax_id_type),
+                full_name=generate_full_name(),
+                tax_id=generate_tax_id(tax_id_type),
                 tax_id_type=tax_id_type,
             )

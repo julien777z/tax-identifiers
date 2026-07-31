@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 import pytest
 
 from tax_identifiers import (
@@ -14,6 +12,7 @@ from tax_identifiers.normalization import (
     transform_required_string,
 )
 from tax_identifiers.us.transformers import transform_tax_identifier
+from tests.factories import generate_tax_id
 
 
 class TestCollapseWhitespace:
@@ -58,10 +57,10 @@ class TestEmptyStrToNone:
 class TestTransformTaxIdentifier:
     """Test that tax identifier normalization respects the origin."""
 
-    def test_cleans_us_identifier_to_digits(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_cleans_us_identifier_to_digits(self) -> None:
         """Test that a US identifier normalizes to nine bare digits."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         result = transform_tax_identifier(
             format_us_ssn(raw_tax_id), origin=TaxIdentifierOrigin.US_TIN
@@ -89,11 +88,10 @@ class TestTransformTaxIdentifier:
 
     def test_foreign_origin_with_ssn_subtype_is_cleaned(
         self,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that an SSN subtype forces US cleaning even for foreign origin."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         result = transform_tax_identifier(
             format_us_ssn(raw_tax_id),

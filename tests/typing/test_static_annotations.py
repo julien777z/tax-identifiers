@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import Annotated, Final, assert_type
 
 import tax_identifiers
@@ -11,12 +10,13 @@ from tax_identifiers import (
 from tax_identifiers.base import BaseModel
 from tax_identifiers.fields import StrRequired
 from tax_identifiers.us.enums import USState
-from tests.conftest import (
-    MaskableTaxIdFieldHolder,
-    StateHolder,
-    TaxIdentifierHolder,
-    TaxIdFieldHolder,
+from tests.factories import (
+    MaskableTaxIdFieldHolderFactory,
+    TaxIdFieldHolderFactory,
+    TaxIdentifierHolderFactory,
+    generate_masked_tax_id,
 )
+from tests.models import StateHolder
 
 COVERED_FIELD_TYPES: Final[frozenset[str]] = frozenset(
     {
@@ -51,38 +51,32 @@ class CustomAnnotationHolder(BaseModel):
 class TestStaticAnnotations:
     """Test that every shipped field type is usable and correctly typed in annotation position."""
 
-    def test_aliases_resolve_to_their_underlying_types(
-        self, tax_id_field_holder_factory: Callable[..., TaxIdFieldHolder]
-    ) -> None:
+    def test_aliases_resolve_to_their_underlying_types(self) -> None:
         """Test that each alias resolves to its underlying type rather than to Any."""
 
-        holder = tax_id_field_holder_factory()
+        holder = TaxIdFieldHolderFactory.build()
 
         assert_type(holder.ssn, str)
         assert_type(holder.unknown, str)
         assert_type(UnconfiguredStringHolder(required="x", tax_id="x").tax_id, str)
         assert_type(StateHolder(state=USState.CALIFORNIA).state, USState)
 
-    def test_mixin_combination_is_correctly_typed(
-        self, tax_identifier_holder_factory: Callable[..., TaxIdentifierHolder]
-    ) -> None:
+    def test_mixin_combination_is_correctly_typed(self) -> None:
         """Test that combining the masking mixin with a model keeps the field's declared type."""
 
-        holder = tax_identifier_holder_factory()
+        holder = TaxIdentifierHolderFactory.build()
 
         assert_type(holder.tax_id, str)
         assert_type(holder.to_masked().tax_id, str)
 
     def test_maskable_aliases_accept_masked_input(
         self,
-        masked_tax_id_factory: Callable[..., str],
-        maskable_tax_id_field_holder_factory: Callable[..., MaskableTaxIdFieldHolder],
     ) -> None:
         """Test that the mask-accepting aliases validate an already-masked value."""
 
-        masked = masked_tax_id_factory()
+        masked = generate_masked_tax_id()
 
-        assert maskable_tax_id_field_holder_factory(us=masked).us == masked
+        assert MaskableTaxIdFieldHolderFactory.build(us=masked).us == masked
 
     def test_every_shipped_field_type_is_covered(self) -> None:
         """Test that no exported field type is missing from this module."""

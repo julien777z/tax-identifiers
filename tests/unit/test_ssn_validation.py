@@ -4,7 +4,7 @@ import pytest
 
 from tax_identifiers import SSNValidation
 from tax_identifiers.us.metadata import STATIC_DIR, SSNAllocationEntry, get_ssn_allocation_data
-from tests.conftest import AllocatedSsn
+from tests.models import AllocatedSsn
 
 
 class TestSSNValidationFromTaxIdentifier:

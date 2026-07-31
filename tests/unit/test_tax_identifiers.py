@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 import pytest
 
 from tax_identifiers import (
@@ -12,6 +10,7 @@ from tax_identifiers import (
     strict_format_us_ssn,
 )
 from tax_identifiers.normalization import strip_non_digits
+from tests.factories import generate_tax_id
 
 
 class TestStripNonDigits:
@@ -37,11 +36,10 @@ class TestCleanUsTaxIdentifier:
 
     def test_normalizes_formatted_identifier_to_digits(
         self,
-        tax_id_factory: Callable[..., str],
     ) -> None:
         """Test that a formatted identifier is normalized to bare digits."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         assert clean_us_tax_identifier(format_us_ssn(raw_tax_id)) == raw_tax_id
 
@@ -75,10 +73,10 @@ class TestFormatUsSsn:
 
         assert format_us_ssn(value) == expected
 
-    def test_formats_full_identifier(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_formats_full_identifier(self) -> None:
         """Test that a nine-digit identifier is formatted as XXX-XX-XXXX."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         assert format_us_ssn(raw_tax_id) == f"{raw_tax_id[:3]}-{raw_tax_id[3:5]}-{raw_tax_id[5:]}"
 
@@ -91,10 +89,10 @@ class TestFormatUsSsn:
 class TestStrictFormatUsSsn:
     """Test that strict SSN formatting requires nine digits."""
 
-    def test_formats_nine_digit_ssn(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_formats_nine_digit_ssn(self) -> None:
         """Test that a nine-digit SSN is formatted with dashes."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         assert (
             strict_format_us_ssn(raw_tax_id)
@@ -111,10 +109,10 @@ class TestStrictFormatUsSsn:
 class TestFormatUsEin:
     """Test that EINs are formatted correctly."""
 
-    def test_formats_nine_digit_ein(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_formats_nine_digit_ein(self) -> None:
         """Test that a nine-digit EIN is formatted as XX-XXXXXXX."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.EIN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.EIN)
 
         assert format_us_ein(raw_tax_id) == f"{raw_tax_id[:2]}-{raw_tax_id[2:]}"
 
@@ -122,26 +120,26 @@ class TestFormatUsEin:
 class TestComparableUsTaxIdentifier:
     """Test that tax identifier comparison ignores formatting."""
 
-    def test_equals_across_formatting(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_equals_across_formatting(self) -> None:
         """Test that dashed and bare forms compare equal."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         assert ComparableUsTaxIdentifier(format_us_ssn(raw_tax_id)) == raw_tax_id
 
-    def test_hashes_equal_across_formatting(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_hashes_equal_across_formatting(self) -> None:
         """Test that dashed and bare forms hash to the same value."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         assert hash(ComparableUsTaxIdentifier(format_us_ssn(raw_tax_id))) == hash(
             ComparableUsTaxIdentifier(raw_tax_id)
         )
 
-    def test_not_equal_to_invalid_string(self, tax_id_factory: Callable[..., str]) -> None:
+    def test_not_equal_to_invalid_string(self) -> None:
         """Test that a malformed comparison value is never equal."""
 
-        raw_tax_id = tax_id_factory(TaxIdentifierType.SSN)
+        raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
 
         assert ComparableUsTaxIdentifier(raw_tax_id) != "not-a-tax-id"
 
