@@ -5,10 +5,6 @@ alwaysApply: true
 
 # Project Rules
 
-## Clarifying Questions
-
-- When a question is presented through the question tool and no answer comes back, never fall back to picking an option. Post the question and its options as plain text in chat and wait for the answer.
-
 ## Documentation
 
 - Document current behavior only. Never describe what a symbol used to do, what was removed, renamed, or deprecated, and never write migration tables or upgrade notes.
