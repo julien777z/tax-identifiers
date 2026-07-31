@@ -17,6 +17,8 @@ The canonical project rules live in `.agents/rules/`.
 ## Branches and Pull Requests
 
 - Keep pull requests focused and give them descriptive titles and descriptions; request appropriate reviewers when the repository workflow requires them.
+- A pull request description covers the changes in that pull request and nothing else. Leave out alternatives considered and rejected, work deferred to a later change, and the reasoning behind not doing something.
+- Repositories are independent. A pull request in one repository does not describe, reference, or explain changes made in another.
 - When additional work arrives on a non-default branch, retain that branch and add the work to its pull request even when the task could be reviewed independently.
 - Query the current branch's pull request before creating one. Reuse it while it is open, or create one from the current branch when none exists.
 - Create a separate branch only when the user asks or the current branch's pull request is already merged; start post-merge work from the default branch.
@@ -56,6 +58,29 @@ The canonical project rules live in `.agents/rules/`.
 ## Guardrails
 
 - Never commit or push agent-authored changes directly to the default branch. If the checkout is on the default branch or detached, create a descriptive non-default branch; otherwise retain the current branch and deliver through its pull request.
+
+<!-- Source: .agents/rules/global.md -->
+
+# Global Rules
+
+## Documentation
+
+- Document current behavior only. Never describe what a symbol used to do, what was removed,
+  renamed, or deprecated, and never write migration tables or upgrade notes.
+- Git history is the record of what changed; documentation describes what exists now.
+- The same applies to code comments and docstrings: no "formerly", "replaces", or "kept for
+  backwards compatibility" notes.
+
+## Clarifying Questions
+
+- When a question is presented through the question tool and no answer comes back, never fall
+  back to picking an option. Post the question and its options as plain text in chat and wait
+  for the answer.
+
+## PR Monitoring And Background Timers
+
+- Never poll a PR with background `sleep` or timed self check-ins; act only on delivered PR
+  activity webhooks.
 
 <!-- Source: .agents/rules/poetry.md -->
 
@@ -101,9 +126,11 @@ build-backend = "poetry.core.masonry.api"
 
 # Project Rules
 
-## PR Monitoring And Background Timers
+## Version Bumps
 
-- Never poll a PR with background `sleep` or timed self check-ins; act only on delivered PR activity webhooks.
+- Never edit `version` in `pyproject.toml`. CI owns it.
+- The `Publish to PyPI` workflow bumps the version with `poetry version <increment>`, then commits and tags the result. A manual bump in a PR collides with that commit.
+- To release, dispatch the `Publish to PyPI` workflow and choose `patch`, `minor`, or `major`. If a change is breaking, say so in the PR description so the right increment is picked. Do not encode it in the version yourself.
 
 <!-- Source: .agents/rules/pydantic.md -->
 
@@ -291,6 +318,9 @@ class Report(BaseModel):
 - Never create shim modules that only re-export symbols from another package for backwards compatibility; update all consumers to import from the canonical source instead.
 - Place generic, stateless, cross-cutting helpers in a `utils.py` module or `utils/` package.
 - Use a `utils.py` module for a small cohesive set of utilities; use a `utils/` package when separate focused utility modules are warranted.
+- Never use a `*_utils.py` module-name suffix (no `datetime_utils.py`); name the module by its topic inside `utils/`.
+- Give a `utils/` package topic-named modules (for example `utils/datetime.py`, `utils/pagination.py`) rather than one flat module.
+- A `utils/__init__.py` stays empty or imports + `__all__` only; consumers import from the specific submodule.
 - Keep domain and orchestration behavior in their owning modules. Do not use utilities as a dumping ground.
 - Narrow exception: `__main__.py` entrypoints may use same-package relative imports for bootstrap (for example `from .runtime import main`), and `__init__.py` may use explicit relative imports when assembling the package’s public surface.
 
@@ -636,6 +666,7 @@ except Exception as exc:
 - Banned terms and what to use instead:
   - **"best effort"** — state the real contract. A function that swallows failures and reports the outcome should say so: name it `try_<verb>` (for example `try_send_email`) and document it as "returning whether it succeeded", not "best-effort".
   - **"seed" / "seeds" / "seeding"** (for test data or sample records) — name the helper for what it builds: a `<noun>_*_factory` fixture, `create_*`, or "sample data". Do not call setup data a "seed".
+  - **"holder"** (for a model or object that carries a field under test) — name it for the thing it models, not for the fact that it holds something: `SsnTaxPayer`, `StateRecord`, `TaxIdAliasSet`. A name ending in "Holder" says nothing a reader can use.
 - If you reach for a placeholder-ish term a future reader could not decode from the name alone, pick a more intuitive name instead of adding it to this list.
 
 - Add a blank line after each docstring.
@@ -764,6 +795,20 @@ ALLOWED_STATES: Final[frozenset[str]] = frozenset({"ready", "complete"})
 - Do not create module-level helper factories inside test files for reusable objects. This includes the first invocation — even a one-off "I'll just put it here for now" builder belongs in `conftest.py` from day one.
 - Follow the canonical factory shape: a `@pytest.fixture` named `<noun>_*_factory` (for example `order_factory`, `customer_factory`, `payment_payload_factory`, `task_factory`) that returns an inner `_build(**overrides) -> Noun` closure. Use the `*_orm_factory` suffix specifically for SQLAlchemy ORM rows.
 - When a shared factory class exists, wrap it in a `*_factory` fixture and use that fixture in tests; do not call the class directly from test modules.
+- **Test modules never call `.build()` on a factory class.** `SomeFactory.build(...)` in a test file bypasses the fixture layer, so the factory cannot be overridden per suite and every call site has to be edited when the factory moves. Request the `*_factory` fixture and call it: `some_factory(field=value)`.
+- The fixture returns the factory's `build` (or a closure over it) so a test reads `order_factory()` / `order_factory(status=...)`, never `OrderFactory.build(...)`.
+
+```python
+# Bad: a test module reaching for the factory class
+def test_masks_all_but_last_four() -> None:
+    payer = SsnTaxPayerFactory.build()
+
+
+# Good: the shared fixture supplies it
+def test_masks_all_but_last_four(ssn_tax_payer_factory) -> None:
+    payer = ssn_tax_payer_factory()
+```
+
 - Put shared factories in `conftest.py` and prefer `@pytest.fixture` for setup.
 - Helper functions that appear in multiple test files must be extracted to the nearest shared `conftest.py` or a `utils.py` in the test service folder.
 - When multiple tests in a suite need the same config overrides, expose a reusable fixture helper (for example, `mock_config` returning `_mock_config(**overrides)`) in `conftest.py` instead of repeating `monkeypatch.setattr(...)` in each test.
