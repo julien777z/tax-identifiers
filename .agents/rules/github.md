@@ -17,11 +17,17 @@ alwaysApply: true
 ## Branches and Pull Requests
 
 - Keep pull requests focused and give them descriptive titles and descriptions; request appropriate reviewers when the repository workflow requires them.
-- A pull request description covers the changes in that pull request and nothing else. Leave out alternatives considered and rejected, work deferred to a later change, and the reasoning behind not doing something.
-- Repositories are independent. A pull request in one repository does not describe, reference, or explain changes made in another.
 - When additional work arrives on a non-default branch, retain that branch and add the work to its pull request even when the task could be reviewed independently.
 - Query the current branch's pull request before creating one. Reuse it while it is open, or create one from the current branch when none exists.
 - Create a separate branch only when the user asks or the current branch's pull request is already merged; start post-merge work from the default branch.
+
+### Merge Authorization
+
+- Agents may create branches and pull requests, commit, and push scoped changes without additional approval.
+- Merging any pull request requires explicit user authorization in the current request or an explicitly invoked skill.
+- An action-skill merge authorization applies only to its original target pull request, including one created during the skill's initial setup. Pull requests created afterward, including follow-up fixes, dependencies, replacements, and reapplications after a corrective revert, require separate current-request authorization.
+- Never enable auto-merge for any pull request unless the user explicitly authorizes it in the current request or an explicitly invoked skill requires it.
+- If an agent mistakenly merges a pull request, it may auto-merge the focused revert pull request that corrects that erroneous merge without separate authorization.
 
 ## Commits
 
