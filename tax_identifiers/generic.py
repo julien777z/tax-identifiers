@@ -44,9 +44,7 @@ class GenericTaxRules(CountryTaxRules):
 
         return bool(tax_id)
 
-    def resolve_metadata(
-        self, tax_id: str, tax_id_type: TaxIdentifierType
-    ) -> TaxIdentifierMetadata | None:
+    def resolve_metadata(self, tax_id: str, tax_id_type: TaxIdentifierType) -> TaxIdentifierMetadata | None:
         """Return None; generic rules resolve no country-specific metadata."""
 
         return None

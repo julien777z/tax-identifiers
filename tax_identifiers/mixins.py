@@ -23,11 +23,7 @@ class TaxIdentifierPairMixin(MixinHost):
             return None
 
         return next(
-            (
-                metadata
-                for metadata in field_info.matched_metadata
-                if isinstance(metadata, TaxIdFieldOptions)
-            ),
+            (metadata for metadata in field_info.matched_metadata if isinstance(metadata, TaxIdFieldOptions)),
             None,
         )
 

@@ -51,9 +51,7 @@ class TestGenericTaxRules:
         rules = GenericTaxRules(Country.FR)
 
         assert (
-            rules.is_valid(
-                generate_tax_id(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
-            )
+            rules.is_valid(generate_tax_id(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN)
             is None
         )
 
@@ -84,9 +82,7 @@ class TestUnknownCountryValidation:
         rules = GenericTaxRules(Country.UNKNOWN)
 
         assert (
-            rules.is_valid(
-                generate_tax_id(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN
-            )
+            rules.is_valid(generate_tax_id(TaxIdentifierType.FOREIGN_TIN), TaxIdentifierType.FOREIGN_TIN)
             is True
         )
 

@@ -30,9 +30,7 @@ def generate_tax_id(
     if tax_id_type == TaxIdentifierType.FOREIGN_TIN:
         return f"{FOREIGN_TAX_ID_PREFIX}{ModelFactory.__random__.randint(0, 99_999_999):08d}"
 
-    resolved_area = (
-        area or f"{ModelFactory.__random__.choice([*range(1, 666), *range(667, 900)]):03d}"
-    )
+    resolved_area = area or f"{ModelFactory.__random__.choice([*range(1, 666), *range(667, 900)]):03d}"
     resolved_group = group or f"{ModelFactory.__random__.randint(1, 99):02d}"
     resolved_serial = serial or f"{ModelFactory.__random__.randint(1, 9999):04d}"
 

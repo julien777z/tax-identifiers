@@ -88,8 +88,6 @@ class TestStaticAnnotations:
     def test_every_shipped_field_type_is_covered(self) -> None:
         """Test that no exported field type is missing from this module."""
 
-        exported = {
-            name for name in tax_identifiers.__all__ if name.endswith("Field") or name == "TaxIdStr"
-        }
+        exported = {name for name in tax_identifiers.__all__ if name.endswith("Field") or name == "TaxIdStr"}
 
         assert exported == COVERED_FIELD_TYPES

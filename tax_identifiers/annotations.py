@@ -26,9 +26,7 @@ class AllowMasked:
     ) -> core_schema.CoreSchema:
         """Return the masked value untouched and defer everything else to the field."""
 
-        return core_schema.no_info_wrap_validator_function(
-            cls.keep_masked_value, handler(source_type)
-        )
+        return core_schema.no_info_wrap_validator_function(cls.keep_masked_value, handler(source_type))
 
     @classmethod
     def keep_masked_value(cls, value: object, handler: ValidatorFunctionWrapHandler) -> str:

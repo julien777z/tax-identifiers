@@ -67,9 +67,7 @@ class UsTaxRules(CountryTaxRules):
             or serial_number == "0000"
         )
 
-    def resolve_metadata(
-        self, tax_id: str, tax_id_type: TaxIdentifierType
-    ) -> TaxIdentifierMetadata | None:
+    def resolve_metadata(self, tax_id: str, tax_id_type: TaxIdentifierType) -> TaxIdentifierMetadata | None:
         """Return SSN allocation details when the identifier is an SSN."""
 
         if tax_id_type != TaxIdentifierType.SSN:

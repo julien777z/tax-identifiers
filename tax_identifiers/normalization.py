@@ -21,8 +21,7 @@ def empty_str_to_none(data: dict[str, object]) -> dict[str, object]:
     """Return a copy of the mapping with empty or whitespace-only strings replaced by None."""
 
     return {
-        key: None if isinstance(value, str) and value.strip() == "" else value
-        for key, value in data.items()
+        key: None if isinstance(value, str) and value.strip() == "" else value for key, value in data.items()
     }
 
 
