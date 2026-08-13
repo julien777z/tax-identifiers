@@ -31,9 +31,7 @@ class TestUsTaxValidatorValidate:
     ) -> None:
         """Test that a valid SSN returns a summary with resolved details."""
 
-        result = us_validator.validate(
-            generate_tax_id(TaxIdentifierType.SSN), TaxIdentifierType.SSN
-        )
+        result = us_validator.validate(generate_tax_id(TaxIdentifierType.SSN), TaxIdentifierType.SSN)
 
         assert result.valid is True
         assert result.metadata is not None

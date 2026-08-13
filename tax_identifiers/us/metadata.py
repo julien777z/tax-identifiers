@@ -30,9 +30,7 @@ def get_ssn_allocation_data() -> dict[str, SSNAllocationEntry]:
     except FileNotFoundError as exc:
         raise RuntimeError(f"SSN allocation dataset file not found: {SSN_ALLOCATION_FILE}") from exc
     except pickle.UnpicklingError as exc:
-        raise RuntimeError(
-            f"SSN allocation dataset is not a valid pickle: {SSN_ALLOCATION_FILE}"
-        ) from exc
+        raise RuntimeError(f"SSN allocation dataset is not a valid pickle: {SSN_ALLOCATION_FILE}") from exc
 
     if not isinstance(payload, dict) or not payload:
         raise ValueError("SSN allocation dataset must be a non-empty mapping.")

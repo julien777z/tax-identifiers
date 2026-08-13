@@ -32,9 +32,7 @@ class TestTaxIdentifierValid:
 
         assert identifier.valid is False
 
-    def test_generated_ssn_is_valid(
-        self, tax_identifier_factory: Callable[..., TaxIdentifier]
-    ) -> None:
+    def test_generated_ssn_is_valid(self, tax_identifier_factory: Callable[..., TaxIdentifier]) -> None:
         """Test that a structurally sound SSN passes the validity check."""
 
         identifier = tax_identifier_factory(tax_id_type=TaxIdentifierType.SSN)
@@ -61,18 +59,14 @@ class TestTaxIdentifierValid:
 class TestTaxIdentifierMetadata:
     """Test that SSN metadata is derived from an identifier."""
 
-    def test_exposes_metadata_for_ssn(
-        self, tax_identifier_factory: Callable[..., TaxIdentifier]
-    ) -> None:
+    def test_exposes_metadata_for_ssn(self, tax_identifier_factory: Callable[..., TaxIdentifier]) -> None:
         """Test that an SSN exposes a resolved metadata object."""
 
         identifier = tax_identifier_factory(tax_id_type=TaxIdentifierType.SSN)
 
         assert identifier.metadata is not None
 
-    def test_returns_none_for_non_ssn(
-        self, tax_identifier_factory: Callable[..., TaxIdentifier]
-    ) -> None:
+    def test_returns_none_for_non_ssn(self, tax_identifier_factory: Callable[..., TaxIdentifier]) -> None:
         """Test that non-SSN identifiers expose no metadata."""
 
         identifier = tax_identifier_factory(tax_id_type=TaxIdentifierType.EIN)
@@ -152,12 +146,8 @@ class TestTaxIdentifierEquality:
         """Test that the same digits under different types are not equal."""
 
         raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
-        ssn = TaxIdentifier(
-            country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.SSN
-        )
-        ein = TaxIdentifier(
-            country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.EIN
-        )
+        ssn = TaxIdentifier(country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.SSN)
+        ein = TaxIdentifier(country=Country.US, tax_id=raw_tax_id, tax_id_type=TaxIdentifierType.EIN)
 
         assert ssn != ein
 

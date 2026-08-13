@@ -28,9 +28,7 @@ class CountryTaxRules(ABC):
         """Return whether a tax identifier passes structural checks, or None when undecidable."""
 
     @abstractmethod
-    def resolve_metadata(
-        self, tax_id: str, tax_id_type: TaxIdentifierType
-    ) -> TaxIdentifierMetadata | None:
+    def resolve_metadata(self, tax_id: str, tax_id_type: TaxIdentifierType) -> TaxIdentifierMetadata | None:
         """Return resolved metadata for a tax identifier, or None when unavailable."""
 
 

@@ -18,9 +18,7 @@ def expected_mask(display: str) -> str:
 class TestTaxIdentifierMasking:
     """Test that tax identifier fields mask and unmask."""
 
-    def test_normalizes_on_construction(
-        self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]
-    ) -> None:
+    def test_normalizes_on_construction(self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]) -> None:
         """Test that a formatted US tax identifier is normalized when the model is built."""
 
         raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
@@ -28,9 +26,7 @@ class TestTaxIdentifierMasking:
 
         assert payer.tax_id == raw_tax_id
 
-    def test_masks_all_but_last_four(
-        self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]
-    ) -> None:
+    def test_masks_all_but_last_four(self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]) -> None:
         """Test that masking hides every character except the last four."""
 
         payer = ssn_tax_payer_factory()
@@ -38,9 +34,7 @@ class TestTaxIdentifierMasking:
 
         assert payer.to_masked().tax_id == expected_mask(display)
 
-    def test_unmask_restores_original_value(
-        self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]
-    ) -> None:
+    def test_unmask_restores_original_value(self, ssn_tax_payer_factory: Callable[..., SsnTaxPayer]) -> None:
         """Test that unmasking restores the original identifier."""
 
         payer = ssn_tax_payer_factory()

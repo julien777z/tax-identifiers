@@ -7,9 +7,7 @@ from tax_identifiers.us.enums import USState
 from tax_identifiers.us.tax_identifiers import clean_us_tax_identifier
 
 US_STATE_BY_CODE: Final[dict[str, USState]] = {state.value: state for state in USState}
-US_STATE_BY_NAME: Final[dict[str, USState]] = {
-    state.name.replace("_", " "): state for state in USState
-}
+US_STATE_BY_NAME: Final[dict[str, USState]] = {state.name.replace("_", " "): state for state in USState}
 
 
 def requires_us_cleaning(origin: TaxIdentifierOrigin, tin_type: TinType | None) -> bool:

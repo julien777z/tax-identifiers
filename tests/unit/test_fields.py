@@ -71,9 +71,7 @@ class TestUSStateField:
 class TestTaxIdField:
     """Test that the tax identifier field annotation normalizes and rejects input."""
 
-    def test_normalizes_us_identifier(
-        self, tax_id_alias_set_factory: Callable[..., TaxIdAliasSet]
-    ) -> None:
+    def test_normalizes_us_identifier(self, tax_id_alias_set_factory: Callable[..., TaxIdAliasSet]) -> None:
         """Test that a US identifier is stored as a formatting-insensitive value."""
 
         raw_tax_id = generate_tax_id(TaxIdentifierType.SSN)
@@ -90,9 +88,7 @@ class TestTaxIdField:
         with pytest.raises(ValidationError, match="Tax ID cannot contain mask characters"):
             tax_id_alias_set_factory(us=generate_masked_tax_id())
 
-    def test_rejects_non_string_value(
-        self, tax_id_alias_set_factory: Callable[..., TaxIdAliasSet]
-    ) -> None:
+    def test_rejects_non_string_value(self, tax_id_alias_set_factory: Callable[..., TaxIdAliasSet]) -> None:
         """Test that a non-string tax identifier is rejected without a type error."""
 
         with pytest.raises(ValidationError):
@@ -213,9 +209,7 @@ class TestUnsupportedTaxIdTypeDeclaration:
         """Test that declaring an unsupported country and type pair fails when the schema is built."""
 
         with pytest.raises(UnsupportedTaxIdTypeError):
-            TypeAdapter(
-                Annotated[TaxIdStr, TaxIdFieldOptions(country=country, tax_id_type=tax_id_type)]
-            )
+            TypeAdapter(Annotated[TaxIdStr, TaxIdFieldOptions(country=country, tax_id_type=tax_id_type)])
 
 
 class TestSsnStructuralValidation:
