@@ -41,6 +41,7 @@ root = "tests/unit"
 reportArgumentType = "none"
 
 [tool.pytest.ini_options]
+filterwarnings = ["error"]
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 asyncio_mode = "auto"
