@@ -6,7 +6,7 @@ authors = [
     { name = "Julien Kmec", email = "me@julien.dev" },
 ]
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.11,<3.16"
 dependencies = [
     "pydantic>=2.13.4",
     "pydantic-super-model>=2.0.0",
@@ -29,7 +29,6 @@ dev = [
 
 [tool.black]
 line-length = 110
-target-version = ["py311", "py312", "py313", "py314"]
 
 [tool.pyright]
 include = ["tax_identifiers", "tests", "scripts"]
@@ -42,22 +41,23 @@ root = "tests/unit"
 reportArgumentType = "none"
 
 [tool.pytest.ini_options]
+filterwarnings = ["error"]
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 asyncio_mode = "auto"
-
-[project.scripts]
-tests = "scripts.run_tests:main"
 
 [tool.poetry]
 packages = [
     {include = "tax_identifiers"},
-    {include = "scripts"},
 ]
 include = [
     { path = "tax_identifiers/py.typed", format = ["sdist", "wheel"] },
     { path = "tax_identifiers/us/static/*.pkl", format = ["sdist", "wheel"] },
     { path = "tax_identifiers/us/static/*.json", format = ["sdist"] },
 ]
+
+[tool.poetry.dependencies]
+pydantic-super-model = { git = "https://github.com/julien777z/pydantic-super-model.git", branch = "codex/python-3-15" }
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
