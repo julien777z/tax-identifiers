@@ -5,7 +5,7 @@ on:
     inputs:
       version_increment:
         description: Version increment type
-        required: false
+        required: true
         type: choice
         default: patch
         options:
