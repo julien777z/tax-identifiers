@@ -26,7 +26,7 @@ jobs:
       url: https://pypi.org/project/tax-identifiers/
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python and Poetry
         uses: ./.github/actions/setup-python-poetry
@@ -71,7 +71,7 @@ jobs:
           git push origin --tags
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: "${{ steps.bump.outputs.new }}"
           name: "Release v${{ steps.bump.outputs.new }}"
