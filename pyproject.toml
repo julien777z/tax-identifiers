@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.11,<3.16"
 dependencies = [
     "pydantic>=2.13.4",
-    "pydantic-super-model>=2.0.0",
+    "pydantic-super-model>=2.2.0",
     "pycountry>=26.2.16",
 ]
 
@@ -55,9 +55,6 @@ include = [
     { path = "tax_identifiers/us/static/*.pkl", format = ["sdist", "wheel"] },
     { path = "tax_identifiers/us/static/*.json", format = ["sdist"] },
 ]
-
-[tool.poetry.dependencies]
-pydantic-super-model = { git = "https://github.com/julien777z/pydantic-super-model.git", branch = "codex/python-3-15" }
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
